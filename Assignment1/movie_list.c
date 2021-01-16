@@ -173,8 +173,10 @@ void assign_languages(Movie* movie, char* input){
 // ************************************************************ //
 void query_user(MovieList* movies){
   /*
-    Prompt the user with a series of options for exploring the provided movies data.
-    Respond to their queries.
+  Prompt the user with a series of options for exploring the provided movies data.
+  Respond to their queries.
+  Params:
+    MovieList* movies   The list of movies which is to be explored by the user
   */
 
   // Setup to get user selection with getline()
@@ -203,17 +205,17 @@ void query_user(MovieList* movies){
 
 void print_initial_prompt(){
   /*
-    Print standard query options list for user
+  Print standard query options list for user
   */
   printf("\n1. Show movies released in the specified year\n2. Show highest rated movie for each year\n3. Show the title and year of release of all movies in a specific language\n4. Exit from the program\n\nEnter a choice from 1 to 4: ");
 }
 
 void respond_to_user(MovieList* movies, int selection){
   /*
-    Given a list of movies and a user's selected query, respond correctly
-    Params:
-      MovieList* movies   The MovieList of available data
-      int selection       The option inputted by the user
+  Given a list of movies and a user's selected query, respond correctly
+  Params:
+    MovieList* movies   The MovieList of available data
+    int selection       The option inputted by the user
   */
   switch(selection){
     int year; // For use in case 1
@@ -222,16 +224,20 @@ void respond_to_user(MovieList* movies, int selection){
       year = prompt_for_year();
       MovieList* filtered_movies = years_movies(movies, year);
 
-      // Print output 
+      // Print the filtered list 
       print_movie_titles(filtered_movies, year);
+      free_MovieList(filtered_movies);
       break;
     case 2:
+      // "Show highest rated movie for each year"
       print_best_each_year(movies);
       break;
     case 3:
+      // "Show the title and year of release of all movies in a specific language"
       print_for_language(movies);
       break;
     case 4:
+    // "Exit from the program"
       break;
     default:
     break;
@@ -240,21 +246,48 @@ void respond_to_user(MovieList* movies, int selection){
 }
 
 int prompt_for_year(){
+  /*
+  In order to return data for a certain year, prompt the user to enter a year 
+  Get from stdin, and return an int
+  */
   int year;
   printf("Enter the year for which you want to see movies: ");
-  
-  
 
+  // Setup for getline()
   ssize_t line_size;
   char* input_buffer;
   size_t input_buffer_size = 50;
   input_buffer = (char*)(calloc(input_buffer_size, sizeof(char)));
 
+  //Get input
   line_size = getline(&input_buffer, &input_buffer_size, stdin);
+
+  // Cast to an int saved in year
   year = atoi(input_buffer);
+
+  // Free the input_buffer
   free(input_buffer);
 
   return year;
+}
+
+MovieList* years_movies(MovieList* all_movies, int year){
+  /*
+  Given a list of movies and a year, return a MovieList of all movies made in the given year
+  Params:
+    MovieList* all_movies, int year
+  */
+  MovieList* filtered_movies = malloc(sizeof(MovieList)); 
+  filtered_movies->first = NULL;
+
+  MovieNode * node = all_movies->first;
+  while(node != NULL){
+    if(node->movie->year == year){
+      add_movie(filtered_movies, node->movie);
+    }
+    node = node->next;
+  }
+  return filtered_movies;
 }
 
 void print_movie_titles(MovieList* movies, int year){
@@ -272,23 +305,7 @@ void print_movie_titles(MovieList* movies, int year){
   }
 }
 
-MovieList* years_movies(MovieList* all_movies, int year){
-  /*
-    Given a list of movies and a year, return a list of all movies made in the
-    given year
-  */
-  MovieList* filtered_movies = malloc(sizeof(MovieList)); 
-  filtered_movies->first = NULL;
 
-  MovieNode * node = all_movies->first;
-  while(node != NULL){
-    if(node->movie->year == year){
-      add_movie(filtered_movies, node->movie);
-    }
-    node = node->next;
-  }
-  return filtered_movies;
-}
 
 void print_best_each_year(MovieList * movies){
   /*
