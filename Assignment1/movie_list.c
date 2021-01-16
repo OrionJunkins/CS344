@@ -1,4 +1,3 @@
-//Structs and definitions
 /*
 Orion Junkins
 Assignment 1: Handles file parsing and user interaction.
