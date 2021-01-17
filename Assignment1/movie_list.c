@@ -10,15 +10,18 @@ Implements movie_list.h
 // ************************************************************ //
 void add_movie(MovieList* list, Movie* new_movie){
   /*
-  Given an existing MovieList and a specific movie, create a node for 
-  the new movie and add it to the head of the list
-  Params: 
-    MovieList* list    Existing list to which the movie will be added
-    Movie* new_movie   New movie which is being added
+    Given an existing MovieList and a specific movie, create a node for 
+    the new movie and add it to the head of the list
+    Params: 
+      MovieList* list    Existing list to which the movie will be added
+      Movie* new_movie   New movie which is being added
   */
 
   // Create a new MovieNode for new_movie and put it at the front of the list
   MovieNode* new_node = (MovieNode*)(malloc(sizeof(MovieNode)));
+  if(new_node == NULL) {
+    printf("ERROR MEM ERROR \n\n\n\n");
+  }
   new_node->movie = new_movie;
   new_node->next = list->first;
   list->first = new_node;
@@ -29,9 +32,9 @@ void add_movie(MovieList* list, Movie* new_movie){
 
 void free_MovieList(MovieList* list){
   /*
-  Free all allocated memory in the list, all its' nodes, and all its' nodes' movies
-  Params:
-    MovieList* list   The movie list to free
+    Free all allocated memory in the list, all its' nodes, and all its' nodes' movies
+    Params:
+      MovieList* list   The movie list to free
   */
 
   // Temp pointer to move through the linked list
@@ -54,12 +57,12 @@ void free_MovieList(MovieList* list){
 // ************************************************************ //
 void parse_file(MovieList* movies, char* filepath) {
   /*
-  Fetch the file given by filepath, open it and parse it line by line.
-  For every line of data, create a Movie and add it to the MovieList movies.
-  The file at filepath is assumed to be formatted correctly.
-  Params:
-    MovieList* movies   The existing list to which all movies will be added 
-    char* filepath      The specified filepath which will be opened & parsed
+    Fetch the file given by filepath, open it and parse it line by line.
+    For every line of data, create a Movie and add it to the MovieList movies.
+    The file at filepath is assumed to be formatted correctly.
+    Params:
+      MovieList* movies   The existing list to which all movies will be added 
+      char* filepath      The specified filepath which will be opened & parsed
   */
  
   // Open the specified file and check validity
@@ -101,21 +104,21 @@ void parse_file(MovieList* movies, char* filepath) {
 
 void output_sucess(char* filepath, int movies_parsed){
   /*
-  Given a filepath name and a number of movies parsed print a success statement
-  Params:
-    char* filepath      Path of movie parsed 
-    int movies_parsed   Number of movies parsed
+    Given a filepath name and a number of movies parsed print a success statement
+    Params:
+      char* filepath      Path of movie parsed 
+      int movies_parsed   Number of movies parsed
   */
   printf("Processed file %s and parsed data for %d movies\n", filepath, movies_parsed);
 }
 
 void parse_line(Movie* movie, char* input){
   /*
-  Given a line of input from a csv, parse the title, year, rating and languages from the respective columns.
-  Set all fields of movie with the corresponding details.
-  Params:
-    Movie* movie    The movie object to which all parsed data will be assigned 
-    char* input     The input string. Assumed to be in the correct format.
+    Given a line of input from a csv, parse the title, year, rating and languages from the respective columns.
+    Set all fields of movie with the corresponding details.
+    Params:
+      Movie* movie    The movie object to which all parsed data will be assigned 
+      char* input     The input string. Assumed to be in the correct format.
   */
 
   // Parse input and set the title of movie
@@ -146,10 +149,10 @@ void parse_line(Movie* movie, char* input){
 
 void assign_languages(Movie* movie, char* input){
   /*
-  Given a string of input languages, parse the string and store each language in the languages array of the specified movie
-  Params:
-    Movie* movie    The movie object to which parsed languages will be assigend 
-    char* input     The input string in the form '[lang1;lang2;lang3]'
+    Given a string of input languages, parse the string and store each language in the languages array of the specified movie
+    Params:
+      Movie* movie    The movie object to which parsed languages will be assigend 
+      char* input     The input string in the form '[lang1;lang2;lang3]'
   */
 
   // Remove leading '[' and trailing ']' from input
@@ -173,10 +176,10 @@ void assign_languages(Movie* movie, char* input){
 // ************************************************************ //
 void query_user(MovieList* movies){
   /*
-  Prompt the user with a series of options for exploring the provided movies data.
-  Respond to their queries.
-  Params:
-    MovieList* movies   The list of movies which is to be explored by the user
+    Prompt the user with a series of options for exploring the provided movies data.
+    Respond to their queries.
+    Params:
+      MovieList* movies   The list of movies which is to be explored by the user
   */
 
   // Setup to get user selection with getline()
@@ -212,21 +215,20 @@ void print_initial_prompt(){
 
 void respond_to_user(MovieList* movies, int selection){
   /*
-  Given a list of movies and a user's selected query, respond correctly
-  Params:
-    MovieList* movies   The MovieList of available data
-    int selection       The option inputted by the user
+    Given a list of movies and a user's selected query, respond correctly
+    Params:
+      MovieList* movies   The MovieList of available data
+      int selection       The option inputted by the user
   */
   switch(selection){
     int year; // For use in case 1
     case 1:   // "Show movies released in the specified year"
       // Get the user to enter a specific year, and produce a list of movies made in that year
       year = prompt_for_year();
-      MovieList* filtered_movies = years_movies(movies, year);
+      MovieList* filtered_movies = years_movies(movies, year);      //MEM LEAK
 
       // Print the filtered list 
       print_movie_titles(filtered_movies, year);
-      free_MovieList(filtered_movies);
       break;
     case 2:
       // "Show highest rated movie for each year"
@@ -241,14 +243,13 @@ void respond_to_user(MovieList* movies, int selection){
       break;
     default:
     break;
-
   }
 }
 
 int prompt_for_year(){
   /*
-  In order to return data for a certain year, prompt the user to enter a year 
-  Get from stdin, and return an int
+    In order to return data for a certain year, prompt the user to enter a year 
+    Get from stdin, and return an int
   */
   int year;
   printf("Enter the year for which you want to see movies: ");
@@ -273,14 +274,23 @@ int prompt_for_year(){
 
 MovieList* years_movies(MovieList* all_movies, int year){
   /*
-  Given a list of movies and a year, return a MovieList of all movies made in the given year
-  Params:
-    MovieList* all_movies, int year
+    Given a list of movies and a year, return a MovieList of all movies made in the given year
+    Params:
+      MovieList* all_movies   Primary MovieList which will be searched for matches
+      int year                Year for which matches will be generated
   */
-  MovieList* filtered_movies = malloc(sizeof(MovieList)); 
+
+  // Create a new MovieList for matching movies
+  MovieList* filtered_movies = (MovieList*)(malloc(sizeof(MovieList))); 
+  if(filtered_movies == NULL){
+    printf("ERROR: Could not allocate memory\n");
+  }
   filtered_movies->first = NULL;
 
   MovieNode * node = all_movies->first;
+  
+  // Iterate all_movies checking the year of each node's movie against year, 
+  // Add that movie to filtered_movies if a match is found
   while(node != NULL){
     if(node->movie->year == year){
       add_movie(filtered_movies, node->movie);
@@ -293,10 +303,16 @@ MovieList* years_movies(MovieList* all_movies, int year){
 void print_movie_titles(MovieList* movies, int year){
   /*
     Given a list of movies, print all titles to stdout, one per line
+    Params:
+      MovieList* movies   MovieList of 
+      int year            The year of the movies in MovieList
   */
+
+ // Enssure there are movies to print
  if (movies->first == NULL){
     printf("No data about movies released in the year %d\n", year);
   } else {
+    // Iterate all of movies printing the title for each
     MovieNode * node = movies->first;
     while(node != NULL){
       printf("%s\n", node->movie->title);
@@ -305,14 +321,18 @@ void print_movie_titles(MovieList* movies, int year){
   }
 }
 
-
-
 void print_best_each_year(MovieList * movies){
   /*
-    Given a list of movies, print the highest rated for every year
+    Helper for print_best_each_year().
+    Given a list of movies, print the details of the highest rated
+    Params:
+      MovieList* movies   The MovieList from which the best will be printed
   */
-  for(int i = MIN_YEAR; i <= MAX_YEAR; i++){
-    print_best(years_movies(movies, i));
+
+  // For every year, generate a list of movies from that year, and print the best one
+  int i;
+  for(i = MIN_YEAR; i <= MAX_YEAR; i++){
+    print_best(years_movies(movies, i)); //MEM LEAK - must revise years_movies
   }
 }
 
@@ -320,10 +340,16 @@ void print_best(MovieList* movies){
   /*
     Helper for print_best_each_year()
     Given a list of movies, print the details of the highest rated
+    Params:
+      MovieList* movies   The list of movies from which the single best will be printed
   */
-  Movie* highest_rated = (Movie*)(calloc(1,sizeof(Movie*)));
+
+  // Create a Movie* to hold the highest rated found
+  Movie* highest_rated = (Movie*)(calloc(1,sizeof(Movie*))); //MEM LEAK
   highest_rated->rating = -1;
 
+  // For every movie, compare the rating to the rating of the highest rated seen so far. 
+  // Update highest_rated if a higher rated movie is found
   MovieNode * node = movies->first;
   while(node != NULL){
     if(node->movie->rating > highest_rated->rating){
@@ -331,29 +357,51 @@ void print_best(MovieList* movies){
     }
     node = node->next;
   }
+
+  // Print the highest rated movie found so long as at least one movie was found
   if(highest_rated->title != NULL){
     printf("%d %.1f %s\n", highest_rated->year, highest_rated->rating, highest_rated->title);
   }  
 }
 
 void print_for_language(MovieList* movies) {
-  char* language;
-  printf("Enter the language for which you want to see movies: ");
+  /*
+    Prompt the user for a language and print every movie in movies which was produced in that language
+    Params:
+      MovieList* movies   The MovieList from which matches will be printed
+  */
 
+  // Prompt the user for a language and store the inpput 
+  printf("Enter the language for which you want to see movies: ");
+  char* language;
   ssize_t line_size;
   size_t input_buffer_size = 21;
   language = (char*)(calloc(input_buffer_size, sizeof(char)));
   line_size = getline(&language, &input_buffer_size, stdin);
-  language[strlen(language)-1] = '\0';
+  language[strlen(language)-1] = '\0'; // Ensure the line ends with a null terminator
+
+  // Print every movie in movies which was produced in language
   print_all_in_language(language, movies);
   free(language);
 }
 
+
 void print_all_in_language(char* language, MovieList* movies){
-  MovieNode * node = movies->first;
+  /*
+    Given a language, print every movie in movies which was produced in that language.
+    Params:
+      char* language      Specified language 
+      MovieList* movies   List of movies which is being searched
+  */
   int match_found = 0;
+
+  // Iterate through every movie
+  MovieNode * node = movies->first;
   while(node != NULL){
-    for (int i = 0; i < 5; i++){
+    // For every language stored in each movie, check against language for a match
+    int i;
+    for (i = 0; i < 5; i++){
+      // If a match is found, update match_found and print the year and title
       if(strcmp(node->movie->languages[i], language) == 0) {
         match_found = 1;
         printf("%d %s\n", node->movie->year, node->movie->title);
@@ -361,6 +409,8 @@ void print_all_in_language(char* language, MovieList* movies){
     } 
     node = node->next;
   } 
+
+  // If no matches were found throughout the entire list, inform the user
   if (match_found == 0) {
       printf("No data about movies released in %s\n", language);
   }
