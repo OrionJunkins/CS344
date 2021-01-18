@@ -1,6 +1,8 @@
 /*
 Orion Junkins
-Assignment 1: Handles file parsing and user interaction.
+Assignment 1: Movies
+junkinso@oregonstate.edu
+Handles file parsing and user interaction.
 Implements movie_list.h
 */
 #include "movie_list.h"
@@ -291,21 +293,6 @@ int prompt_for_year(){
   return year;
 }
 
-void copy_Movie(Movie* dest, Movie* src){
-  dest->title = (char*)(calloc(strlen(src->title) + 1, sizeof(char))); //TODO 100 is arbritrary
-  
-  strcpy(dest->title, src->title);
-
-  dest->year = src->year;
-  
-  int i;
-  for(i = 0; i < MAX_NUM_LANGUAGES; i++){
-    strcpy(dest->languages[i], src->languages[i]);
-  }
-
-  dest->rating = src->rating;
-}
-
 void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year){
   /*
     Given a list of movies and a year, return a MovieList of all movies made in the given year
@@ -326,6 +313,31 @@ void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year){
     }
     node = node->next;
   }
+}
+
+void copy_Movie(Movie* dest, Movie* src){
+  /*
+    Given an empty Movie dest, set (and allocate if needed) all of its' fields with the values held in src
+    Params:
+      Movie* dest     Destination; Empty Movie
+      Movie* src      Source; Movie to be duplicated
+  */
+
+  // Allocate and copy a title based on the length of src->title
+  dest->title = (char*)(calloc(strlen(src->title) + 1, sizeof(char))); 
+  strcpy(dest->title, src->title);
+
+  // Set year
+  dest->year = src->year;
+  
+  // For every language array, copy from src to dest
+  int i;
+  for(i = 0; i < MAX_NUM_LANGUAGES; i++){
+    strcpy(dest->languages[i], src->languages[i]);
+  }
+
+  // Set rating
+  dest->rating = src->rating;
 }
 
 void print_movie_titles(MovieList* movies, int year){
@@ -388,14 +400,15 @@ void print_best(MovieList* movies){
     Params:
       MovieList* movies   The list of movies from which the single best will be printed
   */
-  MovieNode* node = movies->first; //TODO Doc
+
+  // Crete a MovieNode to traverse movies
+  MovieNode* node = movies->first;
 
   // Create a Movie* to hold the highest rated found
   Movie* highest_rated = node->movie; 
   
   // For every movie, compare the rating to the rating of the highest rated seen so far. 
   // Update highest_rated if a higher rated movie is found
-  
   while(node != NULL){
     if(node->movie->rating > highest_rated->rating){
       highest_rated = node->movie;
@@ -429,7 +442,6 @@ void print_for_language(MovieList* movies) {
   print_all_in_language(language, movies);
   free(language);
 }
-
 
 void print_all_in_language(char* language, MovieList* movies){
   /*

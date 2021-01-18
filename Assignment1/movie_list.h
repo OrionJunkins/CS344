@@ -1,7 +1,8 @@
 /*
 Orion Junkins
+junkinso@oregonstate.edu
 Assignment 1: Movies
-Stores a list of movies and gives tools for 
+Handles file parsing and user interaction.
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -138,6 +139,14 @@ void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year);
     Params:
       MovieList* all_movies   Primary MovieList which will be searched for matches
       int year                Year for which matches will be generated
+  */
+
+ void copy_Movie(Movie* dest, Movie* src);
+  /*
+    Given an empty Movie dest, set (and allocate if needed) all of its' fields with the values held in src
+    Params:
+      Movie* dest     Destination; Empty Movie
+      Movie* src      Source; Movie to be duplicated
   */
 
 void print_movie_titles(MovieList* movies, int year);

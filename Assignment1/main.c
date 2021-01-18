@@ -1,10 +1,10 @@
 /*
 Orion Junkins
 Assignment 1: Movies
-Program main: handle command line input, parse the file and query the user.
+junkinso@oregonstate.edu
+Handles command line input, parse the file and query the user.
 Depends on movie_list.c
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
