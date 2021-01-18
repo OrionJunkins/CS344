@@ -1,0 +1,32 @@
+Orion Junkins
+junkinso@oregonstate.edu
+Assignment 1: Movies
+
+Included Files: 
+  main.c
+    Main program flow. Retrieves command line argument, parses the given file, and allows the user to query the data.
+
+  movie_list.h
+    Definitions for all needed structs/typedefs.
+    Declarations for all program helper functions
+
+  movie_list.c
+    Definitions for all program helper functions
+
+
+TO RUN:
+  1) Save test data in an accesible location. Data must be correctly formatted.
+
+  2) Compile BOTH main.c and movie_list.c to an executable
+
+  3) Run the executable with the filepath to the test data as a command line argument
+
+  4) Interact with application - select 4 to quit
+
+
+Example:
+  1) Store test data in 'test_data.csv' and name executable movies
+
+  2) $ gcc -std=gnu99 -o movies main.c movie_list.c
+
+  3) movies test_data.csv
