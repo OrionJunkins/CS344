@@ -20,7 +20,7 @@ void add_movie(MovieList* list, Movie* new_movie){
   // Create a new MovieNode for new_movie and put it at the front of the list
   MovieNode* new_node = (MovieNode*)(malloc(sizeof(MovieNode)));
   if(new_node == NULL) {
-    printf("ERROR MEM ERROR \n\n\n\n");
+    printf("Error allocating memory\n");
   }
   new_node->movie = new_movie;
   new_node->next = list->first;
@@ -85,9 +85,10 @@ void parse_file(MovieList* movies, char* filepath) {
   while(line_size >=0){
     Movie* movie = (Movie*)(malloc(sizeof(Movie))); 
     if(movie == NULL){
-      printf("Error allocating memory");
+      printf("Error allocating memory\n");
       return;
     }
+
     parse_line(movie, line_contents);
     add_movie(movies, movie);
     line_size = getline(&line_contents, &line_buffer_size, fp);
@@ -133,7 +134,7 @@ void parse_line(Movie* movie, char* input){
   
   // Continue parsing and store the languages strings
   pt=strtok(NULL, ",");
-  char* languages = (char*)(calloc(sizeof(char), strlen(pt)));
+  char* languages = (char*)(calloc(MAX_NUM_LANGUAGES * MAX_LANG_LENGTH, sizeof(char)));
   strcpy(languages, pt);
   
   // Continue parsing and set the rating of movie
@@ -161,12 +162,19 @@ void assign_languages(Movie* movie, char* input){
 
   // Parse the string and store languages in movie->languages
   int index = 0;
+  
   char* pt = strtok (input,";");
   while (pt != NULL) {
       strcpy(movie->languages[index], pt);
       pt = strtok(NULL, ";");
       index += 1;
   }
+
+  while(index < MAX_NUM_LANGUAGES){
+    movie->languages[index][0] = '\0'; 
+    index += 1;
+  }
+
 }
 
 
@@ -187,7 +195,7 @@ void query_user(MovieList* movies){
   char* input_buffer;
   size_t input_buffer_size = MAX_INPUT_LENGTH;
   input_buffer = (char*)(calloc(input_buffer_size, sizeof(char)));
-  int user_selection;
+  int user_selection = 0;
 
   // Repeatedly prompt the user with options, get user input and respond accordingly until the user enters '4' (exit)
   while(user_selection != 4){
@@ -225,10 +233,21 @@ void respond_to_user(MovieList* movies, int selection){
     case 1:   // "Show movies released in the specified year"
       // Get the user to enter a specific year, and produce a list of movies made in that year
       year = prompt_for_year();
-      MovieList* filtered_movies = years_movies(movies, year);      //MEM LEAK
+
+      MovieList* filtered_movies = (MovieList*)(malloc(sizeof(MovieList))); 
+      if(filtered_movies == NULL){
+        printf("Error allocating memory\n");
+      }
+      filtered_movies->first = NULL;
+      filtered_movies->size = 0;
+
+      years_movies(filtered_movies, movies, year);    
 
       // Print the filtered list 
       print_movie_titles(filtered_movies, year);
+
+      free_MovieList(filtered_movies);
+      free(filtered_movies);
       break;
     case 2:
       // "Show highest rated movie for each year"
@@ -257,7 +276,7 @@ int prompt_for_year(){
   // Setup for getline()
   ssize_t line_size;
   char* input_buffer;
-  size_t input_buffer_size = 50;
+  size_t input_buffer_size = MAX_INPUT_LENGTH;
   input_buffer = (char*)(calloc(input_buffer_size, sizeof(char)));
 
   //Get input
@@ -272,7 +291,22 @@ int prompt_for_year(){
   return year;
 }
 
-MovieList* years_movies(MovieList* all_movies, int year){
+void copy_Movie(Movie* dest, Movie* src){
+  dest->title = (char*)(calloc(strlen(src->title) + 1, sizeof(char))); //TODO 100 is arbritrary
+  
+  strcpy(dest->title, src->title);
+
+  dest->year = src->year;
+  
+  int i;
+  for(i = 0; i < MAX_NUM_LANGUAGES; i++){
+    strcpy(dest->languages[i], src->languages[i]);
+  }
+
+  dest->rating = src->rating;
+}
+
+void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year){
   /*
     Given a list of movies and a year, return a MovieList of all movies made in the given year
     Params:
@@ -280,24 +314,18 @@ MovieList* years_movies(MovieList* all_movies, int year){
       int year                Year for which matches will be generated
   */
 
-  // Create a new MovieList for matching movies
-  MovieList* filtered_movies = (MovieList*)(malloc(sizeof(MovieList))); 
-  if(filtered_movies == NULL){
-    printf("ERROR: Could not allocate memory\n");
-  }
-  filtered_movies->first = NULL;
-
   MovieNode * node = all_movies->first;
-  
+
   // Iterate all_movies checking the year of each node's movie against year, 
-  // Add that movie to filtered_movies if a match is found
+  // Copy that movie to filtered_movies if a match is found
   while(node != NULL){
     if(node->movie->year == year){
-      add_movie(filtered_movies, node->movie);
+      Movie * matching_movie = (Movie*)(malloc(sizeof(Movie)));
+      copy_Movie(matching_movie, node->movie);
+      add_movie(filtered_movies, matching_movie);
     }
     node = node->next;
   }
-  return filtered_movies;
 }
 
 void print_movie_titles(MovieList* movies, int year){
@@ -329,10 +357,27 @@ void print_best_each_year(MovieList * movies){
       MovieList* movies   The MovieList from which the best will be printed
   */
 
-  // For every year, generate a list of movies from that year, and print the best one
+  // For every year, generate a temporary MovieList of movies from that year, print the best movie, and free the temporary list
   int i;
   for(i = MIN_YEAR; i <= MAX_YEAR; i++){
-    print_best(years_movies(movies, i)); //MEM LEAK - must revise years_movies
+    // Allocate a temp MovieList
+    MovieList* movies_from_year = (MovieList*)(malloc(sizeof(MovieList))); 
+    if(movies_from_year == NULL){
+      printf("Error allocating memory\n");
+    }
+    movies_from_year->first = NULL;
+
+    // Add every movie in movies from year i to movies_from_year
+    years_movies(movies_from_year, movies, i);
+
+    // Print the best movie from year i
+    if(movies_from_year->first != NULL){
+      print_best(movies_from_year); 
+    }
+
+    // Free the temp MovieList
+    free_MovieList(movies_from_year);
+    free(movies_from_year);
   }
 }
 
@@ -343,14 +388,14 @@ void print_best(MovieList* movies){
     Params:
       MovieList* movies   The list of movies from which the single best will be printed
   */
+  MovieNode* node = movies->first; //TODO Doc
 
   // Create a Movie* to hold the highest rated found
-  Movie* highest_rated = (Movie*)(calloc(1,sizeof(Movie*))); //MEM LEAK
-  highest_rated->rating = -1;
-
+  Movie* highest_rated = node->movie; 
+  
   // For every movie, compare the rating to the rating of the highest rated seen so far. 
   // Update highest_rated if a higher rated movie is found
-  MovieNode * node = movies->first;
+  
   while(node != NULL){
     if(node->movie->rating > highest_rated->rating){
       highest_rated = node->movie;
@@ -375,7 +420,7 @@ void print_for_language(MovieList* movies) {
   printf("Enter the language for which you want to see movies: ");
   char* language;
   ssize_t line_size;
-  size_t input_buffer_size = 21;
+  size_t input_buffer_size = MAX_LANG_LENGTH;
   language = (char*)(calloc(input_buffer_size, sizeof(char)));
   line_size = getline(&language, &input_buffer_size, stdin);
   language[strlen(language)-1] = '\0'; // Ensure the line ends with a null terminator
@@ -400,11 +445,13 @@ void print_all_in_language(char* language, MovieList* movies){
   while(node != NULL){
     // For every language stored in each movie, check against language for a match
     int i;
-    for (i = 0; i < 5; i++){
+    for (i = 0; i < MAX_NUM_LANGUAGES; i++){
       // If a match is found, update match_found and print the year and title
-      if(strcmp(node->movie->languages[i], language) == 0) {
-        match_found = 1;
-        printf("%d %s\n", node->movie->year, node->movie->title);
+      if(node->movie->languages[i][0] != '\0'){
+        if (strcmp(node->movie->languages[i], language) == 0) {
+          match_found = 1;
+          printf("%d %s\n", node->movie->year, node->movie->title);
+        }
       }
     } 
     node = node->next;

@@ -11,6 +11,8 @@ Stores a list of movies and gives tools for
 #define MIN_YEAR 1900
 #define MAX_YEAR 2021
 #define MAX_INPUT_LENGTH 100 
+#define MAX_NUM_LANGUAGES 5
+#define MAX_LANG_LENGTH 21
 
 typedef struct Movie {
 /*
@@ -19,7 +21,7 @@ Basic struct to hold the details of a single movie.
 char* title;
 int year;
 float rating;
-char languages[5][21];
+char languages[MAX_NUM_LANGUAGES][MAX_LANG_LENGTH];
 } Movie;
 
 /*
@@ -130,7 +132,7 @@ int prompt_for_year();
     Get from stdin, and return an int
   */
 
-MovieList* years_movies(MovieList* all_movies, int year);
+void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year);
   /*
     Given a list of movies and a year, return a MovieList of all movies made in the given year
     Params:

@@ -19,14 +19,15 @@ int main (int argc, char* argv[])
     return 1;
   }
   char* filepath = argv[1];
-
   //Create an empty MovieList movies
-  struct MovieList* movies = (struct MovieList*)malloc(sizeof(struct MovieList)); 
+  MovieList* movies = (MovieList*)malloc(sizeof(MovieList)); 
   if(movies == NULL){
     printf("ERROR: Could not allocate memory\n");
     return 1;
   }
   movies->first = NULL;
+  movies->size = 0;
+
 
   //Parse the movies in the file at filepath into a list stored in movies
   parse_file(movies, filepath); 
