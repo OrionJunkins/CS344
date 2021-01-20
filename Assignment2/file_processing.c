@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_INPUT_LENGTH 100
+#define MAX_FILENAME_LENGTH 100
+#define PREFIX "movies"
+#define SUFFIX ".csv"
+
+void prompt_for_name(char* filename);
+
 int user_selection(char* prompt, int min, int max) 
 {
     /*
@@ -29,6 +39,55 @@ int user_selection(char* prompt, int min, int max)
         line_size = getline(&input_buffer, &input_buffer_size, stdin);
         user_selection = atoi(input_buffer);
     }
-
+    free (input_buffer);
     return user_selection;
+}
+
+// ************************************************ //
+// SELECT FILE //
+// ************************************************ //
+
+void select_file(FILE* selected_file, int selection)
+{
+    char* filename = (char*) (calloc(MAX_FILENAME_LENGTH, sizeof(char)));
+    switch (selection)
+    {
+    case 1:
+        /* code */
+        break;
+    case 2:
+        /* code */
+        break;
+    case 3:
+        // Specify the name of a file 
+        prompt_for_name(filename);        
+        break;
+    default:
+        printf("Error: invalid selection");
+        break;
     }
+    printf("\n\nFILENAME: %s\n\n", filename);
+
+    //OPEN(filename)
+    free(filename);
+}
+
+void prompt_for_name(char* filename)
+{
+    printf("Enter the complete file name: ");
+
+    ssize_t line_size;
+    size_t input_buffer_size = MAX_FILENAME_LENGTH;
+    line_size = getline(&filename, &input_buffer_size, stdin);
+}
+
+
+// ************************************************ //
+// PROCESS FILE //
+// ************************************************ //
+void process_file(selected_file)
+{
+    return;
+}
+
+
