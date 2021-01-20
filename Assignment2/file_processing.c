@@ -53,10 +53,11 @@ void select_file(FILE* selected_file, int selection)
     switch (selection)
     {
     case 1:
-        /* code */
+        // Pick the largest file
+        largest_file_in_cur_dir(filename);
         break;
     case 2:
-        /* code */
+        // 
         break;
     case 3:
         // Specify the name of a file 
@@ -72,6 +73,21 @@ void select_file(FILE* selected_file, int selection)
     free(filename);
 }
 
+void largest_file_in_cur_dir(filename)
+{
+    DIR* currDir = opendir(".");
+    struct dirent *aDir;
+    struct stat dirStat;
+
+    // Go through all the entries
+    while((aDir = readdir(currDir)) != NULL)
+    {
+        if (strncmp(PREFIX, aDir->d_name, strlen(PREFIX)) == 0 && strcmp(str + strlen(aDir->d_name) - (1 + strlen(SUFFIX)), SUFFIX) == 0) //Extract to bool function
+        {
+            printf("/n%s", aDir->d_name);
+        }
+    }
+}
 void prompt_for_name(char* filename)
 {
     printf("Enter the complete file name: ");
