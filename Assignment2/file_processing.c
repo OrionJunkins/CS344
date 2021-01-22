@@ -1,22 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <sys/stat.h>
-
-#define MAX_INPUT_LENGTH 100
-#define MAX_FILENAME_LENGTH 100
-#define PREFIX "movies"
-#define SUFFIX ".csv"
-#define LONG_LONG_INT_MAX 9223372036854775807
-void prompt_for_name(char* filename);
-void largest_file_in_cur_dir(char* filename);
-bool filename_matches_format(char* filename);
-void smallest_file_in_cur_dir(char* filename);
-
-int user_selection(char* prompt, int min, int max) 
+#include "file_processing.h"
+int get_selection(char* prompt, int min, int max) 
 {
     /*
         Print a given prompt and get input from the user repeateadly until input is valid.
@@ -33,9 +16,9 @@ int user_selection(char* prompt, int min, int max)
 
     // Get input
     ssize_t line_size;
-    char* input_buffer;
-    size_t input_buffer_size = MAX_INPUT_LENGTH;
-    input_buffer = (char*)(calloc(input_buffer_size, sizeof(char)));
+    char* input_buffer = NULL;
+    size_t input_buffer_size = 0;
+    //input_buffer = (char*)(calloc(input_buffer_size, sizeof(char)));
     int user_selection = -1;
     line_size = getline(&input_buffer, &input_buffer_size, stdin);
     user_selection = atoi(input_buffer);
@@ -47,7 +30,6 @@ int user_selection(char* prompt, int min, int max)
         line_size = getline(&input_buffer, &input_buffer_size, stdin);
         user_selection = atoi(input_buffer);
     }
-    free (input_buffer);
     return user_selection;
 }
 
@@ -55,38 +37,36 @@ int user_selection(char* prompt, int min, int max)
 // SELECT FILE //
 // ************************************************ //
 
-void select_file(FILE* selected_file, int selection)
+char* get_file(int selection)
 {
-    char* filename = (char*) (calloc(MAX_FILENAME_LENGTH, sizeof(char)));
+    char* filename = NULL;
     switch (selection)
     {
     case 1:
         // Pick the largest file
-        largest_file_in_cur_dir(filename);
+        filename = largest_file_in_cur_dir();
         break;
     case 2:
-        // 
-        smallest_file_in_cur_dir(filename);
+        filename = smallest_file_in_cur_dir();
         break;
     case 3:
         // Specify the name of a file 
-        prompt_for_name(filename);        
+        filename = prompt_for_name();        
         break;
     default:
         printf("Error: invalid selection");
         break;
     }
-    printf("\n\nFILENAME: %s\n\n", filename);
-
-    //OPEN(filename)
-    free(filename);
+    return filename;
 }
 
-void largest_file_in_cur_dir(char* filename)
+char* largest_file_in_cur_dir()
 {
+    
     off_t largest_file_size = -1;
     DIR* currDir = opendir(".");
     struct dirent *aDir;
+    struct dirent *largest_file;
     struct stat dirStat;
 
     // Go through all the entries
@@ -98,17 +78,18 @@ void largest_file_in_cur_dir(char* filename)
             if(dirStat.st_size > largest_file_size)
             {
                 largest_file_size = dirStat.st_size;
-                strcpy(filename, aDir->d_name);
+                largest_file = aDir;
             }
         }
     }
+    return largest_file->d_name;
 }
-
-void smallest_file_in_cur_dir(char* filename)
+char* smallest_file_in_cur_dir()
 {
     off_t smallest_file_size = LONG_LONG_INT_MAX;
     DIR* currDir = opendir(".");
     struct dirent *aDir;
+    struct dirent *smallest_file;
     struct stat dirStat;
 
     // Go through all the entries
@@ -120,10 +101,11 @@ void smallest_file_in_cur_dir(char* filename)
             if(dirStat.st_size < smallest_file_size)
             {
                 smallest_file_size = dirStat.st_size;
-                strcpy(filename, aDir->d_name);
+                smallest_file = aDir;
             }
         }
     }
+    return smallest_file->d_name;
 }
 
 bool filename_matches_format(char* filename)
@@ -138,13 +120,17 @@ bool filename_matches_format(char* filename)
     return false;
 }
 
-void prompt_for_name(char* filename)
+char* prompt_for_name()
 {
     printf("Enter the complete file name: ");
 
     ssize_t line_size;
-    size_t input_buffer_size = MAX_FILENAME_LENGTH;
+    size_t input_buffer_size = 0;
+    char* filename = NULL; //TODO Repeat this structure elsewhere
     line_size = getline(&filename, &input_buffer_size, stdin);
+
+    filename[strlen(filename)-1] = '\0'; // Remove '\n'
+    return filename;
 }
 
 
@@ -153,6 +139,8 @@ void prompt_for_name(char* filename)
 // ************************************************ //
 void process_file(selected_file)
 {
+    // Parse File
+
     return;
 }
 
