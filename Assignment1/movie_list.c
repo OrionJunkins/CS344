@@ -293,52 +293,7 @@ int prompt_for_year(){
   return year;
 }
 
-void years_movies(MovieList* filtered_movies, MovieList* all_movies, int year){
-  /*
-    Given a list of movies and a year, return a MovieList of all movies made in the given year
-    Params:
-      MovieList* all_movies   Primary MovieList which will be searched for matches
-      int year                Year for which matches will be generated
-  */
 
-  MovieNode * node = all_movies->first;
-
-  // Iterate all_movies checking the year of each node's movie against year, 
-  // Copy that movie to filtered_movies if a match is found
-  while(node != NULL){
-    if(node->movie->year == year){
-      Movie * matching_movie = (Movie*)(malloc(sizeof(Movie)));
-      copy_Movie(matching_movie, node->movie);
-      add_movie(filtered_movies, matching_movie);
-    }
-    node = node->next;
-  }
-}
-
-void copy_Movie(Movie* dest, Movie* src){
-  /*
-    Given an empty Movie dest, set (and allocate if needed) all of its' fields with the values held in src
-    Params:
-      Movie* dest     Destination; Empty Movie
-      Movie* src      Source; Movie to be duplicated
-  */
-
-  // Allocate and copy a title based on the length of src->title
-  dest->title = (char*)(calloc(strlen(src->title) + 1, sizeof(char))); 
-  strcpy(dest->title, src->title);
-
-  // Set year
-  dest->year = src->year;
-  
-  // For every language array, copy from src to dest
-  int i;
-  for(i = 0; i < MAX_NUM_LANGUAGES; i++){
-    strcpy(dest->languages[i], src->languages[i]);
-  }
-
-  // Set rating
-  dest->rating = src->rating;
-}
 
 void print_movie_titles(MovieList* movies, int year){
   /*

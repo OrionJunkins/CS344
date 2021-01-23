@@ -20,8 +20,10 @@ int main()
 {   
     // Get top level menu user selection
     int user_selection = get_selection(TOP_LEVEL_INPUT_PROMPT, 1, 2);
+    
     // Continue to prompt the user until they select 2 ('Exit') at the top level menu
     while(user_selection != 2){
+
         // Prompt for file selection method
         user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);
         // Select a file in the selected manner
@@ -41,7 +43,13 @@ int main()
 
         // Process the selected file
         //process_file(selected_file);
-        create_yearly_files("./test/", movies);
+
+        char new_dir_path[30];
+        get_path(new_dir_path);
+
+        mkdir(new_dir_path, 0777);
+
+        create_all_yearly_files(new_dir_path, movies);
 
         //Free movies and everything it contains
         free_MovieList(movies);

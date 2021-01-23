@@ -195,7 +195,7 @@ void copy_Movie(Movie* dest, Movie* src)
 // ************************************************************ //
 // Directory/File Creation
 // ************************************************************ //
-void create_yearly_files(char* dir_path, MovieList* movies)
+void create_all_yearly_files(char* dir_path, MovieList* movies)
 {
     /*
         Given a list of movies, create a file for every year in which at least one movie was made.
@@ -215,32 +215,43 @@ void create_yearly_files(char* dir_path, MovieList* movies)
         // Add every movie in movies from year i to movies_from_year
         years_movies(movies_from_year, movies, i);
 
-        char year[5];  //TODO Remove if possible
-        sprintf(year, "%d", i); 
-        char* filepath = calloc(20, sizeof(char));
-        strcat(filepath, dir_path);
-        strcat(filepath, year);
-        strcat(filepath, ".txt");
+        if (movies_from_year->first != NULL)
+        {
+            create_yearly_file(dir_path, i, movies_from_year);
+            free_MovieList(movies_from_year);
+        }
         
-        int fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0600); //TODO CHECK PERMISSIONS
-        if (fd == -1)
-        {
-            printf("open() failed on \"%s\"\n", filepath);
-            perror("Error");
-            exit(1);
-	    }
 
-        MovieNode * node = movies_from_year->first;
-        while(node != NULL)
-        {
-            char new_line[1 + strlen(node->movie->title)];
-            strcpy(new_line, node->movie->title);
-            strcat(new_line, "\n");
-            write(fd, new_line, strlen(new_line));
-            node=node->next;
-        }        
-
-        free_MovieList(movies_from_year);
+        
         free(movies_from_year);
     }
+}
+
+void create_yearly_file(char* dir_path, int year, MovieList* movies_from_year)
+{
+    char year_string[5];  //TODO Remove if possible
+    sprintf(year_string, "%d", year); 
+    char* filepath = calloc(20, sizeof(char));
+    strcat(filepath, dir_path);
+    strcat(filepath, year_string);
+    strcat(filepath, ".txt");
+    
+    int fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0640); //TODO CHECK PERMISSIONS
+    if (fd == -1)
+    {
+        printf("open() failed on \"%s\"\n", filepath);
+        perror("Error");
+        exit(1);
+    }
+
+    MovieNode * node = movies_from_year->first;
+    while(node != NULL)
+    {
+        char new_line[1 + strlen(node->movie->title)];
+        strcpy(new_line, node->movie->title);
+        strcat(new_line, "\n");
+        write(fd, new_line, strlen(new_line));
+        node=node->next;
+    }        
+    
 }

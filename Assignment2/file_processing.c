@@ -126,7 +126,7 @@ char* prompt_for_name()
 
     ssize_t line_size;
     size_t input_buffer_size = 0;
-    char* filename = NULL; //TODO Repeat this structure elsewhere
+    char* filename = NULL; //TODO Repeat this structure elsewhere for getline
     line_size = getline(&filename, &input_buffer_size, stdin);
 
     filename[strlen(filename)-1] = '\0'; // Remove '\n'
@@ -144,4 +144,16 @@ void process_file(selected_file)
     return;
 }
 
+void get_path(char* dir_path)
+{
+    int upper_bound = 99999;
+    int rand_number = rand() % (upper_bound + 1);
+    char number[6]; 
+    sprintf(number, "%d", rand_number); 
 
+    strcpy(dir_path, "./");
+    strcat(dir_path, ONID_ID);
+    strcat(dir_path, ".movies.");
+    strcat(dir_path, number);
+    strcat(dir_path, "/");
+}

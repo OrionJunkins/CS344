@@ -50,6 +50,7 @@ typedef struct MovieList {
 } MovieList;
 
 void create_year_file(int year, MovieList* years_movies);
+void create_yearly_file(char* dir_path, int year, MovieList* movies_from_year);
 
 // ************************************************************ //
 // MovieList helpers
