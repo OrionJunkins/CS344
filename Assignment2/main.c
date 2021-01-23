@@ -10,7 +10,6 @@
 */
 
 #include "file_processing.c"
-#include "movie_list.c"
 
 
 char* TOP_LEVEL_INPUT_PROMPT = "1. Select file to process\n2. Exit the program\n\nEnter a choice 1 or 2: ";
@@ -35,31 +34,8 @@ int main()
             selected_file = get_file(user_selection);
         }   
         
-        MovieList* movies = (MovieList*)malloc(sizeof(MovieList)); 
-        if(movies == NULL)
-        {
-            printf("ERROR: Could not allocate memory\n");
-            return 1;
-        }
-        movies->first = NULL;
-        movies->size = 0;
-
-        //Parse the movies in the file at filepath into a list stored in movies
-        parse_file(movies, selected_file); 
-
-        // Process the selected file
-        //process_file(selected_file);
-
-        char new_dir_path[30];
-        get_path(new_dir_path);
-
-        mkdir(new_dir_path, 0777);
-
-        create_all_yearly_files(new_dir_path, movies);
-
-        //Free movies and everything it contains
-        free_MovieList(movies);
-        free(movies);
+        process_file(selected_file);
+        
 
         // Re-prompt with top level options
         user_selection = get_selection(TOP_LEVEL_INPUT_PROMPT, 1, 2);

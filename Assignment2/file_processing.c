@@ -1,4 +1,5 @@
 #include "file_processing.h"
+
 int get_selection(char* prompt, int min, int max) 
 {
     /*
@@ -137,17 +138,47 @@ char* prompt_for_name()
 // ************************************************ //
 // PROCESS FILE //
 // ************************************************ //
-void process_file(selected_file)
+void process_file(char* selected_file)
 {
-    // Parse File
+    MovieList* movies = (MovieList*)malloc(sizeof(MovieList)); 
+    if(movies == NULL)
+    {
+        printf("ERROR: Could not allocate memory\n");
+        return;
+    }
+    movies->first = NULL;
+    movies->size = 0;
 
+    //Parse the movies in the file at filepath into a list stored in movies
+    parse_file(movies, selected_file); 
+
+    // Process the selected file
+    //process_file(selected_file);
+
+    char new_dir_path[30];
+    
+    int rand_seed_offset = 0;
+    do {
+        srand (time(NULL) + rand_seed_offset);
+        rand_seed_offset += 1;
+        get_path(new_dir_path);
+        printf("%s", new_dir_path);
+    } while(access(new_dir_path, F_OK) == 0);
+
+    mkdir(new_dir_path, 0777);
+
+    create_all_yearly_files(new_dir_path, movies);
+
+    //Free movies and everything it contains
+    free_MovieList(movies);
+    free(movies);
     return;
 }
 
 void get_path(char* dir_path)
 {
     int upper_bound = 99999;
-    srand ( time(NULL) );
+    
     int rand_number = rand() % (upper_bound + 1);
     char number[6]; 
     sprintf(number, "%d", rand_number); 
