@@ -20,14 +20,20 @@ int main()
 {   
     // Get top level menu user selection
     int user_selection = get_selection(TOP_LEVEL_INPUT_PROMPT, 1, 2);
-    
+
     // Continue to prompt the user until they select 2 ('Exit') at the top level menu
     while(user_selection != 2){
-
         // Prompt for file selection method
         user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);
         // Select a file in the selected manner
         char* selected_file = get_file(user_selection);
+
+        while( access( selected_file, F_OK ) != 0 ) 
+        {
+            printf("The file %s was not found. Try again\n\n", selected_file);
+            user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);
+            selected_file = get_file(user_selection);
+        }   
         
         MovieList* movies = (MovieList*)malloc(sizeof(MovieList)); 
         if(movies == NULL)

@@ -63,7 +63,7 @@ void parse_file(MovieList* movies, char* filename) {
     FILE* fp = fopen(filename, "r");
     if(fp == NULL)
     {
-        printf("Error reading %s", filename);
+        printf("The file %s was not found", filename);
         return;
     }
     

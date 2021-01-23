@@ -147,6 +147,7 @@ void process_file(selected_file)
 void get_path(char* dir_path)
 {
     int upper_bound = 99999;
+    srand ( time(NULL) );
     int rand_number = rand() % (upper_bound + 1);
     char number[6]; 
     sprintf(number, "%d", rand_number); 
