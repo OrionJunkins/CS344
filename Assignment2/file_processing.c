@@ -210,14 +210,16 @@ void process_file(char* selected_file)
         get_path(new_dir_path);
         rand_seed_offset += 1;
     } while(access(new_dir_path, F_OK) == 0);
-
+    
     // Make a new directory with the given path
     mkdir(new_dir_path, 0750);
 
     // Isolate the name of the dir for printing
-    char* dir_name = new_dir_path;
+    char dir_name_tmp[MAX_DIR_NAME_LENGTH];
+    strcpy(dir_name_tmp, new_dir_path);
+    dir_name_tmp[strlen(dir_name_tmp)-1] = '\0';
+    char* dir_name = dir_name_tmp;
     dir_name += 2;
-    dir_name[strlen(dir_name)-1] = '\0';
 
     printf("Created directory with the name %s\n\n", dir_name);
 
@@ -244,7 +246,7 @@ void get_path(char* output_dir_path)
     sprintf(number, "%d", rand_number); 
     
     // Copy/concatenate all sections of the tile to output_dir_path
-    strcpy(output_dir_path, "./");
+    strcat(output_dir_path, "./");
     strcat(output_dir_path, ONID_ID);
     strcat(output_dir_path, ".movies.");
     strcat(output_dir_path, number);

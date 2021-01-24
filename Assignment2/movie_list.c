@@ -289,7 +289,6 @@ void create_yearly_file(char* dir_path, int year, MovieList* movies_from_year)
     strcat(filepath, dir_path);
     strcat(filepath, year_string);
     strcat(filepath, ".txt");
-    
     // Open a new file at the filpath
     int fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0640); //TODO CHECK PERMISSIONS
     if (fd == -1)
