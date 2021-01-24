@@ -1,3 +1,9 @@
+/*
+Orion Junkins
+junkinso@oregonstate.edu
+Assignment 2
+*/
+
 #include "file_processing.h"
 
 // ************************************************ //
@@ -14,10 +20,11 @@ int get_selection(char* prompt, int min, int max)
         Returns:
             int user_selection    integer value within the range [min,max]
     */
+
     // Prompt the user
     printf("%s", prompt);
 
-    // Get an integccccer input from stdin
+    // Get an integer input from stdin
     ssize_t line_size;
     char* input_buffer = NULL;
     size_t input_buffer_size = 0;
@@ -207,6 +214,13 @@ void process_file(char* selected_file)
     // Make a new directory with the given path
     mkdir(new_dir_path, 0750);
 
+    // Isolate the name of the dir for printing
+    char* dir_name = new_dir_path;
+    dir_name += 2;
+    dir_name[strlen(dir_name)-1] = '\0';
+
+    printf("Created directory with the name %s\n\n", dir_name);
+
     // Create a file for every year represented in movies with all titles from that year
     create_all_yearly_files(new_dir_path, movies);
 
@@ -228,7 +242,7 @@ void get_path(char* output_dir_path)
     int rand_number = rand() % (upper_bound + 1);
     char number[6]; 
     sprintf(number, "%d", rand_number); 
-
+    
     // Copy/concatenate all sections of the tile to output_dir_path
     strcpy(output_dir_path, "./");
     strcat(output_dir_path, ONID_ID);

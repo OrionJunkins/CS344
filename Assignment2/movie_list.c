@@ -1,3 +1,9 @@
+/*
+Orion Junkins
+junkinso@oregonstate.edu
+Assignment 2
+*/
+
 #include "movie_list.h"
 
 // ************************************************************ //
@@ -29,7 +35,8 @@ void add_movie(MovieList* list, Movie* new_movie)
     list->size++;
 }
 
-void free_MovieList(MovieList* list){
+void free_MovieList(MovieList* list)
+{
     /*
         Free all allocated memory in the list, all its' nodes, and all its' nodes' movies
         Params:
@@ -72,6 +79,7 @@ void parse_file(MovieList* movies, char* filename)
         printf("The file %s was not found", filename);
         return;
     }
+    printf("Now processing the chosen file named %s\n", filename);
 
     // Setup for getline()
     char* line_contents = NULL;
@@ -100,21 +108,6 @@ void parse_file(MovieList* movies, char* filename)
 
     // Close the file
     fclose(fp);
-
-    // Output a statement declaring success
-    output_sucess(filename, movies->size);
-}
-
-void output_sucess(char* filepath, int movies_parsed)
-{
-    /*
-        TODO: NEEDED?
-        Given a filepath name and a number of movies parsed print a success statement
-        Params:
-            char* filepath      Path of movie parsed 
-            int movies_parsed   Number of movies parsed
-    */
-    printf("Processed file %s and parsed data for %d movies\n", filepath, movies_parsed);
 }
 
 void parse_line(Movie* movie, char* input)

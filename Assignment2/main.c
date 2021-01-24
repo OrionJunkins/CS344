@@ -9,9 +9,12 @@
     Creates a directory
     Creates new files in the newly created directory and writes processed data to these files
 */
+
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX_INPUT_LENGTH 100
+
+// Include .h not .c for multi file compilation if preffered
+// #include "file_processing.h"
 #include "file_processing.c"
 
 char* TOP_LEVEL_INPUT_PROMPT = "1. Select file to process\n2. Exit the program\n\nEnter a choice 1 or 2: ";
@@ -32,7 +35,7 @@ int main()
         char* selected_file = get_file(user_selection);
 
         // If the selected file is not valid, re-prompt the user
-        while( access( selected_file, F_OK ) != 0 ) 
+        while(access(selected_file, F_OK) != 0) 
         {
             printf("The file %s was not found. Try again\n\n", selected_file);
             user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);

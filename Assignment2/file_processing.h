@@ -1,3 +1,8 @@
+/*
+Orion Junkins
+junkinso@oregonstate.edu
+Assignment 2
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,13 +15,86 @@
 
 #define MAX_INPUT_LENGTH 100
 #define MAX_FILENAME_LENGTH 100
+#define MAX_DIR_NAME_LENGTH 100
+#define LONG_LONG_INT_MAX 9223372036854775807
 #define PREFIX "movies_"
 #define SUFFIX ".csv"
-#define LONG_LONG_INT_MAX 9223372036854775807
 #define ONID_ID "junkinso"
-#define MAX_DIR_NAME_LENGTH 100
-char* prompt_for_name();
+
+// ************************************************ //
+// SELECT FILE //
+// ************************************************ //
+int get_selection(char* prompt, int min, int max);
+/*
+    Print a given prompt and get input from the user repeateadly until input is valid
+    Params:
+        char* prompt    prompt which will be printed every time input is requested
+        int min         lower bound for input (inclusive)
+        int max         upper bound for input (inclusive)
+    Returns:
+        int user_selection    integer value within the range [min,max]
+*/
+
+
+char* get_file(int selection);
+/*
+    Given a choice selection made by the user, find the name of the desired file in the current directory
+    Params:
+        int selection:      user choice in the range [1,3]
+    returns:
+        char* filename:     exact filename which corresponds to the users selection
+*/
+
+
 char* largest_file_in_cur_dir();
-bool filename_matches_format(char* filename);
+/*
+    Check every file in the current direcory. Return the filename of the largest file with the specified format
+    Returns:
+        char* d_name        The filename of the largest file matching the format
+*/
+
 char* smallest_file_in_cur_dir();
-void get_path(char* dir_path);
+/*
+    Check every file in the current direcory. Return the filename of the smallest file with the specified format
+    Returns:
+        char* d_name        The filename of the smallest file matching the format
+*/
+
+bool filename_matches_format(char* filename);
+/*
+    Check to see if a given filename has the specified suffix and prefix 
+    Params:
+        char* filename      filename which will be checked
+    Returns:    
+        bool        True if filename matches format, false otherwise
+*/
+  
+
+char* prompt_for_name();
+/*
+    Prompt the user for a filename
+    Returns:
+        char* filename      filename exactly as entered by the user
+*/
+
+
+
+// ************************************************ //
+// PROCESS FILE //
+// ************************************************ //
+void process_file(char* selected_file);
+/*
+    Given a filename, process it into a movie list, create a new directory, and store a list of titles in a new txt file for each year
+    Params:
+        char* selected_file         filename which will be opened/processed. Assumed to be valid
+*/
+
+
+void get_path(char* output_dir_path);
+/*
+    Generate a new filpath in the form ./ONID_ID.movies.#/ where # is a randomly generated number up to 99999
+    Params:
+        char* output_dir_path       Output variable to which the new filepath will be assigned
+*/
+
+  
