@@ -20,33 +20,34 @@ Assignment 2
 #define MAX_NUM_LANGUAGES 5
 #define MAX_LANG_LENGTH 21
 
-
-
-
-typedef struct Movie {
-/*
-Basic struct to hold the details of a single movie.
-*/
-char* title;
-int year;
-float rating;
-char* languages;
+typedef struct Movie 
+{
+    /*
+        Basic type/struct to hold the details of a single movie.
+    */
+    char* title;
+    int year;
+    float rating;
+    char* languages;
 } Movie;
 
-/*
-Combines a Movie* with a pointer to another MovieNode to allow movies to be stored in a linked list
-*/
-typedef struct MovieNode {
-  Movie* movie;
-  struct MovieNode* next;
+
+typedef struct MovieNode 
+{
+    /*
+        Combines a Movie* with a pointer to another MovieNode to allow Movies to be stored in a linked list
+    */
+    Movie* movie;
+    struct MovieNode* next;
 } MovieNode;
 
-typedef struct MovieList {
-/*
-  Stores a pointer to the first MovieNode of the linked list and the list size
-*/
-  MovieNode* first;
-  int size;
+typedef struct MovieList 
+{
+    /*
+        Stores a pointer to the first MovieNode of the linked list and the list size
+    */
+    MovieNode* first;
+    int size;
 } MovieList;
 
 void create_year_file(int year, MovieList* years_movies);

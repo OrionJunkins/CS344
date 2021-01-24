@@ -14,6 +14,7 @@
 #define SUFFIX ".csv"
 #define LONG_LONG_INT_MAX 9223372036854775807
 #define ONID_ID "junkinso"
+#define MAX_DIR_NAME_LENGTH 100
 char* prompt_for_name();
 char* largest_file_in_cur_dir();
 bool filename_matches_format(char* filename);
