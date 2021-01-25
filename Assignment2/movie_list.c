@@ -51,6 +51,7 @@ void free_MovieList(MovieList* list)
     {
         tmp = list->first->next;
         free(list->first->movie->title);
+        free(list->first->movie->languages);
         free(list->first->movie);
         free(list->first);
         list->first = tmp;
@@ -108,6 +109,8 @@ void parse_file(MovieList* movies, char* filename)
 
     // Close the file
     fclose(fp);
+
+    free(line_contents);
 }
 
 void parse_line(Movie* movie, char* input)
@@ -290,7 +293,7 @@ void create_yearly_file(char* dir_path, int year, MovieList* movies_from_year)
     strcat(filepath, year_string);
     strcat(filepath, ".txt");
     // Open a new file at the filpath
-    int fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0640); //TODO CHECK PERMISSIONS
+    int fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     if (fd == -1)
     {
         printf("open() failed on \"%s\"\n", filepath);
@@ -307,5 +310,6 @@ void create_yearly_file(char* dir_path, int year, MovieList* movies_from_year)
         strcat(new_line, "\n");
         write(fd, new_line, strlen(new_line));
         node=node->next;
-    }          
+    }  
+    free(filepath);        
 }

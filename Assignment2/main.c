@@ -31,19 +31,23 @@ int main()
         // Prompt for file selection method
         user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);
 
+
         // Select a file in the selected manner
-        char* selected_file = get_file(user_selection);
+        char* selected_file = calloc(MAX_FILENAME_LENGTH, sizeof(char));
+        get_file(selected_file, user_selection);
 
         // If the selected file is not valid, re-prompt the user
         while(access(selected_file, F_OK) != 0) 
         {
             printf("The file %s was not found. Try again\n\n", selected_file);
             user_selection = get_selection(FILE_SELECTION_INPUT_PROMPT, 1, 3);
-            selected_file = get_file(user_selection);
+            get_file(selected_file, user_selection);
         }   
         
         // Process the selected file
         process_file(selected_file);
+
+        free(selected_file);
 
         // Re-prompt with top level options
         user_selection = get_selection(TOP_LEVEL_INPUT_PROMPT, 1, 2);

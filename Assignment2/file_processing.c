@@ -40,46 +40,44 @@ int get_selection(char* prompt, int min, int max)
         user_selection = atoi(input_buffer);
     }
 
+    free(input_buffer);
     return user_selection;
 }
 
-char* get_file(int selection)
+void get_file(char* filename, int selection)
 {
     /*
-        Given a choice selection made by the user, find the name of the desired file in the current directory
+        Given a choice selection made by the user, find the name of the desired file in the current directory 
         Params:
-            int selection:      user choice in the range [1,3]
-        returns:
             char* filename:     exact filename which corresponds to the users selection
+            int selection:      user choice in the range [1,3]    
     */
-    char* filename = NULL;
     switch (selection)
     {
     case 1:
         // Pick the largest file
-        filename = largest_file_in_cur_dir();
+        largest_file_in_cur_dir(filename);
         break;
     case 2:
         // Pick the smallest file
-        filename = smallest_file_in_cur_dir();
+        smallest_file_in_cur_dir(filename);
         break;
     case 3:
         // Specify the name of a file 
-        filename = prompt_for_name();        
+        prompt_for_name(filename);        
         break;
     default:
         printf("Error: invalid selection");
         break;
     }
-    return filename;
 }
 
-char* largest_file_in_cur_dir()
+void largest_file_in_cur_dir(char* filename)
 {
     /*
         Check every file in the current direcory. Return the filename of the largest file with the specified format
-        Returns:
-            char* d_name        The filename of the largest file matching the format
+        Params:
+            char* filename        The filename of the largest file matching the format
     */
 
     // Setup to store file/size info
@@ -102,15 +100,16 @@ char* largest_file_in_cur_dir()
             }
         }
     }
-    return largest_file->d_name;
+    strcpy(filename, largest_file->d_name);
+    closedir(currDir);
 }
 
-char* smallest_file_in_cur_dir()
+void smallest_file_in_cur_dir(char* filename)
 {
     /*
         Check every file in the current direcory. Return the filename of the smallest file with the specified format
-        Returns:
-            char* d_name        The filename of the smallest file matching the format
+        Params:
+            char* filename        The filename of the smallest file matching the format
     */
 
     // Setup to store file/size info
@@ -133,7 +132,8 @@ char* smallest_file_in_cur_dir()
             }
         }
     }
-    return smallest_file->d_name;
+    strcpy(filename, smallest_file->d_name);
+    closedir(currDir);
 }
 
 bool filename_matches_format(char* filename)
@@ -155,23 +155,22 @@ bool filename_matches_format(char* filename)
     return false;
 }
 
-char* prompt_for_name()
+void prompt_for_name(char* filename)
 {
     /*
         Prompt the user for a filename
-        Returns:
-            char* filename      filename exactly as entered by the user
+        Params:
+            char* filename      output location for user entered filename
     */
     printf("Enter the complete file name: ");
 
     ssize_t line_size;
     size_t input_buffer_size = 0;
-    char* filename = NULL;
-    line_size = getline(&filename, &input_buffer_size, stdin);
-
-    filename[strlen(filename)-1] = '\0'; // Remove '\n'
-
-    return filename;
+    char* input = NULL;
+    line_size = getline(&input, &input_buffer_size, stdin);
+    input[strlen(input)-1] = '\0'; // Remove '\n'
+    strcpy(filename, input);
+    free(input);
 }
 
 
@@ -246,7 +245,7 @@ void get_path(char* output_dir_path)
     sprintf(number, "%d", rand_number); 
     
     // Copy/concatenate all sections of the tile to output_dir_path
-    strcat(output_dir_path, "./");
+    strcpy(output_dir_path, "./");
     strcat(output_dir_path, ONID_ID);
     strcat(output_dir_path, ".movies.");
     strcat(output_dir_path, number);
