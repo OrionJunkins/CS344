@@ -23,3 +23,22 @@ bool is_exit_command(char* command) {
         return false;
     }
 }
+
+bool is_runnable(char* command) {
+    if (strlen(command) == 0){
+        printf("Empty command\n");
+        return false;
+    } else if (command[0] == '#') {
+        printf("Comment\n");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+void execute(char* command) {
+    /*
+        Execute the given command
+    */
+   printf("EXECUTING!!! %s\n", command);
+}
