@@ -36,9 +36,46 @@ bool is_runnable(char* command) {
     }
 }
 
-void execute(char* command) {
+
+void execute(char* input_command) {
     /*
         Execute the given command
     */
-   printf("EXECUTING!!! %s\n", command);
+   Command* command = malloc(sizeof(Command)); 
+
+   parse_command(input_command, command);
+
+   free(command);
 }
+
+
+
+void parse_command(char* input_command, Command* command) {
+    /*
+        Tokenize the input_command into a Command
+    */
+    printf("EXECUTING!!! %s\n", input_command);
+    char* save_ptr;
+    char* pt;
+    pt = strtok_r(input_command, " ", &save_ptr);
+    strcpy(command->command_name, pt);
+
+    pt = strtok_r(NULL, " ", &save_ptr);
+
+    while(pt != NULL){
+        if(strcmp("&",pt) == 0){
+            printf(" & \n");
+        } else if(strcmp("<",pt) == 0){
+            printf(" < \n");
+        } else if(strcmp(">",pt) == 0){
+            printf(" > \n");
+        } else if(strcmp("$$",pt) == 0){
+            printf(" $$ \n");
+        }else{
+            printf("other shit %s\n", pt);
+        }
+
+        pt = strtok_r(NULL, " ", &save_ptr); 
+    }
+}
+

@@ -11,20 +11,21 @@ int main(){
     bool shell_is_running = true;
 
     // Each command recieved will be held here
-    char command[COMMAND_BUFFER_SIZE];
+    char command_buffer[COMMAND_BUFFER_SIZE];
     
     while(shell_is_running){
         
         // Get a new command from stdin
-        get_command(command);
+        get_command(command_buffer);
 
-        if(is_exit_command(command)) {
+        if(is_exit_command(command_buffer)) {
             shell_is_running = false;
-        } else if (is_runnable(command)){
-            execute(command);
+        } else if (is_runnable(command_buffer)){
+            execute(command_buffer);
         }
-
-        memset(command, '\0', COMMAND_BUFFER_SIZE);
+        
+        memset(command_buffer, '\0', COMMAND_BUFFER_SIZE);
+        
     }
 
     return 0;
