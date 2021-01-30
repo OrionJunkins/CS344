@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h> 
 #include <unistd.h>
+#include <fcntl.h>
 #define COMMAND_BUFFER_SIZE 2048
 #define MAX_NUM_ARGS 512
 
@@ -28,6 +29,4 @@ bool is_builtin(Command* command);
 bool is_exit_command(char* command);
 void exec_external(Command* command);
 void exec_internal(Command* command);
-
-
-
+void set_io_streams(Command* command);
