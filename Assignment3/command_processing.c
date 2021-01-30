@@ -24,7 +24,10 @@ bool is_exit_command(char* command) {
     }
 }
 
-bool is_runnable(char* command) {
+bool is_runnable(char* command) { 
+    /*
+        Check if a given command is runnable (not a comment or an empty command)
+    */
     if (strlen(command) == 0){
         printf("Empty command\n");
         return false;
@@ -45,6 +48,8 @@ void execute(char* input_command) {
 
    parse_command(input_command, command);
 
+   //redirect_files(command); TODO
+
    free(command);
 }
 
@@ -62,19 +67,22 @@ void parse_command(char* input_command, Command* command) {
 
     pt = strtok_r(NULL, " ", &save_ptr);
 
+    int arg_index = 0;
     while(pt != NULL){
         if(strcmp("&",pt) == 0){
-            printf(" & \n");
+            command->background = true;
         } else if(strcmp("<",pt) == 0){
-            printf(" < \n");
+            pt = strtok_r(NULL, " ", &save_ptr);
+            strcpy(command->infile, pt);
         } else if(strcmp(">",pt) == 0){
-            printf(" > \n");
+            pt = strtok_r(NULL, " ", &save_ptr);
+            strcpy(command->outfile, pt);
         } else if(strcmp("$$",pt) == 0){
             printf(" $$ \n");
         }else{
-            printf("other shit %s\n", pt);
+            strcpy(command->arguments[arg_index], pt);            
+            arg_index += 1;
         }
-
         pt = strtok_r(NULL, " ", &save_ptr); 
     }
 }

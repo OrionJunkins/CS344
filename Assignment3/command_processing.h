@@ -8,9 +8,9 @@ bool is_exit_command(char* command);
 
 typedef struct Command {
     char command_name[COMMAND_BUFFER_SIZE];
-    char* arguments[MAX_NUM_ARGS];
-    char* infile;
-    char* outfile;
+    char arguments[MAX_NUM_ARGS][COMMAND_BUFFER_SIZE];
+    char infile[COMMAND_BUFFER_SIZE];
+    char outfile[COMMAND_BUFFER_SIZE];
     bool background;
     } Command; 
 
