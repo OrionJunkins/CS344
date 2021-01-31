@@ -52,7 +52,7 @@ void execute(char* input_command) {
     } else {
         exec_external(command);
     }
-
+    
     free(command);
 }
 
@@ -84,9 +84,7 @@ void parse_command(char* input_command, Command* command) {
         }
         pt = strtok_r(NULL, " ", &save_ptr); 
     }
-    //for (int i = 0; i < command->arg_count; i++){
-    //    printf("arg %d: %s\n", i, command->arguments[i]);
-    //}
+
 }
 
 bool is_builtin(Command* command){
@@ -118,7 +116,8 @@ void exec_external(Command* command){
         args[i+1] = command->arguments[i]; 
     }
     args[command->arg_count + 1] = NULL;
-    
+
+    int saved_stdout = dup(1);
     //printf("command: %s\n", command->command_name);
     //for (int i = 0; i < command->arg_count + 2; i++){
     //    printf("exec arg %d: %s\n", i, args[i]);
@@ -127,7 +126,6 @@ void exec_external(Command* command){
     int childStatus;
     // Fork a new process
     pid_t spawnPid = fork();
-
     switch(spawnPid){
         case -1:
             perror("fork()\n");
@@ -147,7 +145,9 @@ void exec_external(Command* command){
             // Wait for child's termination
             spawnPid = waitpid(spawnPid, &childStatus, 0);
         break;
-    }     
+    }  
+    dup2(saved_stdout, 1);
+    close(saved_stdout);   
 }
 
 void set_io_streams(Command* command) {
@@ -157,6 +157,9 @@ void set_io_streams(Command* command) {
     */
 
     if (strlen(command->infile) > 0){
+#if 0
+        printf("INFILE REDIR\n");
+#endif
         int sourceFD = open(command->infile, O_RDONLY);
         if (sourceFD == -1) { 
             perror("source open()"); 
@@ -171,6 +174,7 @@ void set_io_streams(Command* command) {
     }
     if (strlen(command->outfile) > 0){
         // Open target file //TODO: PERMISSIONS
+        
         int targetFD = open(command->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644); 
         if (targetFD == -1) { 
             perror("target open()"); 
