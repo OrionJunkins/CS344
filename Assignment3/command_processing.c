@@ -1,5 +1,5 @@
 #include "command_processing.h"
-
+//TODO, flush stdout after every printf
 void get_command(char* command){
     /*
         Get a command from stdin and save it to the command parameter
@@ -13,6 +13,30 @@ void get_command(char* command){
     command[recieved_command_size - 1] = '\0';    
 }
 
+void expand_variables(char * command) {
+    unsigned int pidLength = sizeof(pid_t);
+    char PID[pidLength];
+    sprintf(PID, "%d", getpid());
+    printf("PID: %d\n", getpid());
+
+    char expanded_command[COMMAND_BUFFER_SIZE];
+    int expanded_index = 0;
+    for(int orig_index = 0; orig_index < COMMAND_BUFFER_SIZE; orig_index++){
+        if (command[orig_index] == '$' && command[orig_index + 1] == '$'){
+            for (int i = 0; i < strlen(PID); i++){
+                expanded_command[expanded_index + i] = PID[i];
+            }
+            orig_index += 1;
+            expanded_index += strlen(PID);
+        } else {
+            expanded_command[expanded_index] = command[orig_index];
+            expanded_index += 1;
+        }
+        
+    }
+    printf("new comm: %s\n",expanded_command);
+    strcpy(command, expanded_command);
+}
 bool is_exit_command(char* command) {
     /*
         Given a command, see if is an exit command to decide if the shell should be exited
@@ -37,13 +61,20 @@ bool is_runnable(char* command) {
     }
 }
 
+Command* new_empty_Command(){
+    Command* command = (Command*)(malloc(sizeof(Command))); 
+    command->arg_count = 0;
+    strcpy(command->infile, "");
+    strcpy(command->outfile, "");
+    command->background = false;
+    return command;
 
+}
 void execute(char* input_command) {
     /*
         Execute the given command
     */
-    Command* command = malloc(sizeof(Command)); 
-    command->arg_count = 0;
+    Command* command = new_empty_Command();
 
     parse_command(input_command, command);
 
@@ -117,7 +148,7 @@ void exec_external(Command* command){
     }
     args[command->arg_count + 1] = NULL;
 
-    int saved_stdout = dup(1);
+    //int saved_stdout = dup(1);
     //printf("command: %s\n", command->command_name);
     //for (int i = 0; i < command->arg_count + 2; i++){
     //    printf("exec arg %d: %s\n", i, args[i]);
@@ -146,8 +177,8 @@ void exec_external(Command* command){
             spawnPid = waitpid(spawnPid, &childStatus, 0);
         break;
     }  
-    dup2(saved_stdout, 1);
-    close(saved_stdout);   
+    //dup2(saved_stdout, 1);
+    //close(saved_stdout);   
 }
 
 void set_io_streams(Command* command) {
@@ -187,4 +218,8 @@ void set_io_streams(Command* command) {
             exit(2); 
         }
     }
+}
+
+void status(){
+    printf("%s\n", PROGRAM_STATUS);
 }

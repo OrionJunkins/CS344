@@ -14,7 +14,6 @@ const char BUILTIN_COMMANDS[NUM_BUILTINS][20] = {
     "status",
 };
 
-
 typedef struct Command {
     char command_name[COMMAND_BUFFER_SIZE];
     char arguments[MAX_NUM_ARGS][COMMAND_BUFFER_SIZE];

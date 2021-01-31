@@ -1,1 +1,13 @@
-hello
+command_processing.c
+command_processing.h
+junk
+junk2
+main
+main.c
+main.dSYM
+othertest.txt
+p3testscript
+shellsh
+smallsh
+test.txt
+testdir$$

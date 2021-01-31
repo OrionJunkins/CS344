@@ -4,6 +4,7 @@
 #include "command_processing.c"
 
 #define COMMAND_BUFFER_SIZE 2048
+char* PROGRAM_STATUS = "exit value 0";
 
 int main(){
 
@@ -17,7 +18,7 @@ int main(){
         
         // Get a new command from stdin
         get_command(command_buffer);
-
+        expand_variables(command_buffer);
         if(is_exit_command(command_buffer)) {
             shell_is_running = false;
         } else if (is_runnable(command_buffer)){
