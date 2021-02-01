@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #define COMMAND_BUFFER_SIZE 2048
 #define MAX_NUM_ARGS 512
+int WSTATUS = 0; //check that 0 is correct TODO
 
 #define NUM_BUILTINS 3
 const char BUILTIN_COMMANDS[NUM_BUILTINS][20] = {
@@ -29,5 +30,5 @@ bool is_exit_command(char* command);
 void exec_external(Command* command);
 void exec_internal(Command* command);
 void set_io_streams(Command* command);
-
+void status();
 

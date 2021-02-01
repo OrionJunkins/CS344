@@ -4,7 +4,7 @@
 #include "command_processing.c"
 
 #define COMMAND_BUFFER_SIZE 2048
-char* PROGRAM_STATUS = "exit value 0";
+
 
 int main(){
 
