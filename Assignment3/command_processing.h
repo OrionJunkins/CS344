@@ -26,9 +26,9 @@ typedef struct Command {
 
 void parse_command(char* input_command, Command* command);
 bool is_builtin(Command* command);
-bool is_exit_command(char* command);
 void exec_external(Command* command);
 void exec_internal(Command* command);
 void set_io_streams(Command* command);
 void status();
-
+Command* new_empty_Command();
+void cd(char* arg);
