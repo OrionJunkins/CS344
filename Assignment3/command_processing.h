@@ -4,6 +4,7 @@
 #include <stdlib.h> 
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #define COMMAND_BUFFER_SIZE 2048
 #define MAX_NUM_ARGS 512
 int WSTATUS = 0; //check that 0 is correct TODO
@@ -28,7 +29,11 @@ void parse_command(char* input_command, Command* command);
 bool is_builtin(Command* command);
 void exec_external(Command* command);
 void exec_internal(Command* command);
-void set_io_streams(Command* command);
+void set_output_stream(Command* command);
+void set_input_stream(Command* command);
 void status();
 Command* new_empty_Command();
 void cd(char* arg);
+
+void parent_SIGINT_handler(int num);
+void parent_SIGSTP_handler (int num);

@@ -150,7 +150,6 @@ void parse_command(char* input_command, Command* command) {
     }
 }
 
-
 bool is_builtin(Command* command){
     /*
         If the given command has a name which is included in the array of builtins, return true, else false
@@ -328,4 +327,16 @@ void set_output_stream(Command* command) {
         int devNull = open("/dev/null", O_RDONLY);
         int result = dup2(devNull, 1);
     }
+}
+
+
+/*****************************************************
+ *                  Signal Handling                  *
+ *****************************************************/
+void parent_SIGINT_handler(int num) {
+    write(STDOUT_FILENO,"SIGINT\n", 8);
+}
+
+void parent_SIGSTP_handler (int num) {
+    write(STDOUT_FILENO,"SIGTSTP\n", 10);
 }
