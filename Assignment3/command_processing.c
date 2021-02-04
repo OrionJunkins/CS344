@@ -333,10 +333,27 @@ void set_output_stream(Command* command) {
 /*****************************************************
  *                  Signal Handling                  *
  *****************************************************/
+
+void set_SIGINT_parent(){
+    struct sigaction SIGINT_parent_action = {0};
+    SIGINT_parent_action.sa_handler = parent_SIGINT_handler;
+    SIGINT_parent_action.sa_flags = 0;
+    sigfillset(&SIGINT_parent_action.sa_mask);
+    sigaction(SIGINT, &SIGINT_parent_action, NULL);
+}
+
 void parent_SIGINT_handler(int num) {
     write(STDOUT_FILENO,"SIGINT\n", 8);
 }
 
+void set_SIGTSTP_parent(){
+    struct sigaction SIGTSTP_parent_action = {0};
+    SIGTSTP_parent_action.sa_handler = parent_SIGSTP_handler;
+    SIGTSTP_parent_action.sa_flags = 0;
+    sigfillset(&SIGTSTP_parent_action.sa_mask);
+    sigaction(SIGTSTP, &SIGTSTP_parent_action, NULL);
+}
+
 void parent_SIGSTP_handler (int num) {
-    write(STDOUT_FILENO,"SIGTSTP\n", 10);
+    write(STDOUT_FILENO,"SIGTSTP\n", 9);
 }

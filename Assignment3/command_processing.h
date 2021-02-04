@@ -8,6 +8,7 @@
 #define COMMAND_BUFFER_SIZE 2048
 #define MAX_NUM_ARGS 512
 int WSTATUS = 0; //check that 0 is correct TODO
+bool BACKGROUND_ENABLED = true;
 
 #define NUM_BUILTINS 3
 const char BUILTIN_COMMANDS[NUM_BUILTINS][20] = {
