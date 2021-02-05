@@ -3,9 +3,16 @@
 #define COMMAND_BUFFER_SIZE 2048
 
 int main(){
-    set_SIGINT_parent();
-    set_SIGTSTP_parent(); 
-    
+    struct sigaction SIGINT_action = {0}, SIGTSTP_action = {0}, SIGCHLD_action = {0};
+    set_SIGINT_parent(&SIGINT_action);
+    set_SIGTSTP_parent(&SIGTSTP_action); 
+    set_SIGCHLD(&SIGCHLD_action);
+
+    sigaction(SIGINT, &SIGINT_action, NULL);
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+    sigaction(SIGCHLD, &SIGCHLD_action, NULL);
+
+
     // Each command recieved will be held here
     char command_buffer[COMMAND_BUFFER_SIZE];
     

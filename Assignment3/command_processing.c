@@ -135,7 +135,9 @@ void parse_command(char* input_command, Command* command) {
     pt = strtok_r(NULL, " ", &save_ptr);
     while(pt != NULL){
         if(strcmp("&",pt) == 0){
-            command->background = true;
+            if (BACKGROUND_ENABLED){
+                command->background = true;
+            }
         } else if(strcmp("<",pt) == 0){
             pt = strtok_r(NULL, " ", &save_ptr);
             strcpy(command->infile, pt);
@@ -228,6 +230,8 @@ void exec_external(Command* command){
         Given that a command is externally defined, execute it
     */
     // Produce an argument array for an exec function from command->arguments
+    struct sigaction SIGINT_action = {0}, SIGTSTP_action = {0};
+
     char* args[MAX_NUM_ARGS];
     args[0] = command->command_name;
     for (int i = 0; i < command->arg_count; i++){
@@ -244,6 +248,16 @@ void exec_external(Command* command){
             break;
         case 0:
             // In the child process
+            //set_SIGTSTP_child();
+            
+            set_action_to_default(&SIGINT_action);
+            set_action_to_default(&SIGTSTP_action);
+
+            sigaction(SIGINT, &SIGINT_action, NULL);
+            sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
+            
+            printf("here");
             // Update IO streams based on command specification
             set_input_stream(command);
             set_output_stream(command);
@@ -334,26 +348,58 @@ void set_output_stream(Command* command) {
  *                  Signal Handling                  *
  *****************************************************/
 
-void set_SIGINT_parent(){
-    struct sigaction SIGINT_parent_action = {0};
-    SIGINT_parent_action.sa_handler = parent_SIGINT_handler;
-    SIGINT_parent_action.sa_flags = 0;
-    sigfillset(&SIGINT_parent_action.sa_mask);
-    sigaction(SIGINT, &SIGINT_parent_action, NULL);
+// sigaction(SIGINT, &SIGINT_parent_action, NULL);
+void set_SIGINT_parent(struct sigaction* SIGINT_parent_action){
+    SIGINT_parent_action->sa_handler = parent_SIGINT_handler;
+    SIGINT_parent_action->sa_flags = 0;
+    sigfillset(&SIGINT_parent_action->sa_mask);
 }
 
 void parent_SIGINT_handler(int num) {
     write(STDOUT_FILENO,"SIGINT\n", 8);
 }
 
-void set_SIGTSTP_parent(){
-    struct sigaction SIGTSTP_parent_action = {0};
-    SIGTSTP_parent_action.sa_handler = parent_SIGSTP_handler;
-    SIGTSTP_parent_action.sa_flags = 0;
-    sigfillset(&SIGTSTP_parent_action.sa_mask);
-    sigaction(SIGTSTP, &SIGTSTP_parent_action, NULL);
+void set_SIGTSTP_parent(struct sigaction* action){
+    action->sa_handler = parent_SIGTSTP_handler;
+    action->sa_flags = 0;
+    sigfillset(&action->sa_mask);
 }
 
-void parent_SIGSTP_handler (int num) {
+void parent_SIGTSTP_handler (int num) {
     write(STDOUT_FILENO,"SIGTSTP\n", 9);
+    if(BACKGROUND_ENABLED){
+        BACKGROUND_ENABLED = false;
+    } else {
+        BACKGROUND_ENABLED = true;
+    }
+}
+
+void set_action_to_default(struct sigaction* action){
+    action->sa_handler = SIG_DFL;
+    action->sa_flags = 0;
+    sigfillset(&action->sa_mask);  //TODO wtf does this do
+}
+
+
+
+
+
+void set_SIGCHLD(struct sigaction* action){
+    action->sa_handler = SIGCHLD_handler;
+    action->sa_flags = 0;
+    sigfillset(&action->sa_mask);
+}
+
+void SIGCHLD_handler(int num){
+    printf("child terminated\n");
+    int wstatus = 1;
+    //pid_t child_PID = wait(&wstatus);
+
+    printf("wstatus %d\n", wstatus);
+    printf("WTERMSIG(WSTATUS) %d\n", WTERMSIG(wstatus));
+
+    if(WIFSIGNALED(wstatus)){
+      printf("Child %d terminated by signal %d\n", child_PID, WTERMSIG(wstatus));
+    }
+    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }

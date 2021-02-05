@@ -37,4 +37,12 @@ Command* new_empty_Command();
 void cd(char* arg);
 
 void parent_SIGINT_handler(int num);
-void parent_SIGSTP_handler (int num);
+void parent_SIGTSTP_handler (int num);
+void child_SIGSTP_handler (int num);
+void set_SIGTSTP_child();
+void set_SIGINT_parent(struct sigaction* SIGINT_parent_action);
+void set_SIGTSTP_parent(struct sigaction* SIGTSTP_parent_action);
+void set_action_to_default(struct sigaction* action);
+
+void set_SIGCHLD(struct sigaction* SIGCHLD_action);
+void SIGCHLD_handler(int num);
