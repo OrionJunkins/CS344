@@ -1,6 +1,4 @@
 #include "command_processing.h"
-//TODO, flush stdout after every printf
-
 /*****************************************************
  *                Command fetching                   *
  *****************************************************/
@@ -62,17 +60,14 @@ bool is_runnable(char* command) {
     // Check for empty line
     if (strlen(command) == 0){
         return false;
-
     // Check for comment
     } else if (command[0] == '#') {
         return false;
-
     // Otherwise, command is runnable
     } else {
         return true;
     }
 }
-
 
 
 /*****************************************************
@@ -83,7 +78,7 @@ void execute(char* input_command, BG_process_list* active_BG) {
         Process and execute the given command
     */
     // Generate a completely blank Command
-    Command* command = new_empty_Command();
+    Command* command = {new_empty_Command()};
 
     // Parse the input_command string into the Command structure
     parse_command(input_command, command);
@@ -106,8 +101,8 @@ Command* new_empty_Command(){
     // Malloc new Command
     Command* command = (Command*)(malloc(sizeof(Command))); 
 
-    //Initialize all fields
-    memset( command->arguments, '\0', sizeof(char)*MAX_NUM_ARGS*COMMAND_BUFFER_SIZE );
+    // Initialize all fields
+    memset(command->arguments, '\0', sizeof(char) * MAX_NUM_ARGS*COMMAND_BUFFER_SIZE );
     command->arg_count = 0;
     strcpy(command->infile, "");
     strcpy(command->outfile, "");
@@ -133,21 +128,26 @@ void parse_command(char* input_command, Command* command) {
     // Continue parsing and updating command fields until NULL is found
     pt = strtok_r(NULL, " ", &save_ptr);
     while(pt != NULL){
-        if(strcmp("&",pt) == 0){
-            if (BACKGROUND_ENABLED){
-                command->background = true;
-            }
-        } else if(strcmp("<",pt) == 0){
+        if(strcmp("<",pt) == 0){         // Input redirection
             pt = strtok_r(NULL, " ", &save_ptr);
             strcpy(command->infile, pt);
-        } else if(strcmp(">",pt) == 0){
+        } else if(strcmp(">",pt) == 0){         // Output redirection
             pt = strtok_r(NULL, " ", &save_ptr);
             strcpy(command->outfile, pt);
-        } else{
+        } else{         // Just another argument to be added to the list
             strcpy(command->arguments[command->arg_count], pt);            
             command->arg_count += 1;
         }
+        // Move to the next 
         pt = strtok_r(NULL, " ", &save_ptr); 
+    }
+
+    if(strcmp(command->arguments[command->arg_count - 1], "&") == 0){
+        if (BACKGROUND_ENABLED){
+            command->background = true;
+        }
+        strcpy(command->arguments[command->arg_count - 1], "\0");
+        command->arg_count -= 1;
     }
 }
 
@@ -252,13 +252,13 @@ void exec_external(Command* command, BG_process_list* active_BG){
             exit(1);
             break;
         case 0:
+            
             // In the child process
             if(!command->background){ //if foreground
                 sigaction(SIGINT, &default_action, NULL);
             }
 
             sigaction(SIGTSTP, &ignore_action, NULL);
-
             
             // Update IO streams based on command specification
             set_input_stream(command);
@@ -302,13 +302,13 @@ void set_input_stream(Command* command) {
         // Open target file
         int sourceFD = open(command->infile, O_RDONLY);
         if (sourceFD == -1) { 
-            printf("Cannot open %s for input\n", command->infile); 
+            printf("cannot open %s for input\n", command->infile); 
             exit(1); 
         }
         // Redirect stdin to target file
         int result = dup2(sourceFD, 0);
         if (result == -1) { 
-            perror("Cannot open %s for input\n"); 
+            perror("cannot open %s for input\n"); 
             exit(1); 
         }
 
@@ -338,7 +338,7 @@ void set_output_stream(Command* command) {
         // Redirect stdout to target file
         int result = dup2(targetFD, 1);
         if (result == -1) { 
-            perror("Cannot open %s for input\n"); 
+            perror("cannot open %s for input\n"); 
             exit(1); 
         }
 
@@ -363,10 +363,10 @@ void set_SIGTSTP_parent(struct sigaction* action){
 
 void parent_SIGTSTP_handler (int num) {
     if(BACKGROUND_ENABLED){
-        write(STDOUT_FILENO, "Entering foreground-only mode (& is now ignored)\n:", 50);
+        write(STDOUT_FILENO, "Entering foreground-only mode (& is now ignored)\n", 50);
         BACKGROUND_ENABLED = false;
     } else {
-        write(STDOUT_FILENO, "Exiting foreground-only mode\n:", 30);
+        write(STDOUT_FILENO, "Exiting foreground-only mode\n", 30);
         BACKGROUND_ENABLED = true;
     }
 }
