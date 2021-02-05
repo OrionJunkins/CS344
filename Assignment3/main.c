@@ -17,8 +17,7 @@ int main(){
     
     // Loop until an exit command is executed
     while(1){
-        // Close finished BG processes
-        close_finished_bg(active_BG);
+        
         // Get a new command from stdin
         memset(command_buffer, '\0', COMMAND_BUFFER_SIZE);
         get_command(command_buffer);
@@ -30,6 +29,8 @@ int main(){
         if (is_runnable(command_buffer)){
             execute(command_buffer, active_BG);
         }
+        // Close finished BG processes
+        close_finished_bg(active_BG);
     }
 
     free_process_list(active_BG);

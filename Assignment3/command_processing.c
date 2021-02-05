@@ -249,7 +249,9 @@ void exec_external(Command* command, BG_process_list* active_BG){
             break;
         case 0:
             // In the child process
-            sigaction(SIGINT, &default_action, NULL);
+            if(!command->background){
+                sigaction(SIGINT, &default_action, NULL);
+            }
             sigaction(SIGTSTP, &default_action, NULL);
             
             // Update IO streams based on command specification
@@ -379,6 +381,8 @@ void free_process_list(BG_process_list* processes){
     }
 }
 
+//TODO currently only bg processes are in the list, so there is no notification for fg child death
+// Perhaps add a separate sig handler for child death?
 void close_finished_bg(BG_process_list* active_BG){
     process_node* node_ptr;
     node_ptr = active_BG->first;
