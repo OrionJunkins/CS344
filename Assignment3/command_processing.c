@@ -79,7 +79,7 @@ bool is_runnable(char* command) {
 /*****************************************************
  *               Command Handling                    *
  *****************************************************/
-void execute(char* input_command) {
+void execute(char* input_command, BG_process_list* active_BG) { 
     /*
         Process and execute the given command
     */
@@ -93,7 +93,7 @@ void execute(char* input_command) {
     if (is_builtin(command)){
         exec_internal(command);
     } else {
-        exec_external(command);
+        exec_external(command, active_BG);
     }
     
     // Free the malloc'd command
@@ -225,12 +225,13 @@ void cd(char* given_path) {
  *          External Command Execution               *
  *****************************************************/
 
-void exec_external(Command* command){
+void exec_external(Command* command, BG_process_list* active_BG){
     /* 
         Given that a command is externally defined, execute it
     */
     // Produce an argument array for an exec function from command->arguments
-    struct sigaction SIGINT_action = {0}, SIGTSTP_action = {0};
+    struct sigaction default_action = {0};
+    default_action.sa_handler = SIG_DFL;
 
     char* args[MAX_NUM_ARGS];
     args[0] = command->command_name;
@@ -248,20 +249,12 @@ void exec_external(Command* command){
             break;
         case 0:
             // In the child process
-            //set_SIGTSTP_child();
+            sigaction(SIGINT, &default_action, NULL);
+            sigaction(SIGTSTP, &default_action, NULL);
             
-            set_action_to_default(&SIGINT_action);
-            set_action_to_default(&SIGTSTP_action);
-
-            sigaction(SIGINT, &SIGINT_action, NULL);
-            sigaction(SIGTSTP, &SIGTSTP_action, NULL);
-
-            
-            printf("here");
             // Update IO streams based on command specification
             set_input_stream(command);
             set_output_stream(command);
-
             // Execute the command
             execvp(args[0], args);   
 
@@ -274,7 +267,7 @@ void exec_external(Command* command){
             // If command is a background process, print the child PID and proceed
             if (command->background){
                 printf("Child spawned with PID: %d\n", spawnPid);
-
+                add_process(active_BG, spawnPid);
             //If it is a foreground process, wait for the child to terminate
             } else{
                 spawnPid = waitpid(spawnPid, &WSTATUS, 0);
@@ -348,16 +341,6 @@ void set_output_stream(Command* command) {
  *                  Signal Handling                  *
  *****************************************************/
 
-// sigaction(SIGINT, &SIGINT_parent_action, NULL);
-void set_SIGINT_parent(struct sigaction* SIGINT_parent_action){
-    SIGINT_parent_action->sa_handler = parent_SIGINT_handler;
-    SIGINT_parent_action->sa_flags = 0;
-    sigfillset(&SIGINT_parent_action->sa_mask);
-}
-
-void parent_SIGINT_handler(int num) {
-    write(STDOUT_FILENO,"SIGINT\n", 8);
-}
 
 void set_SIGTSTP_parent(struct sigaction* action){
     action->sa_handler = parent_SIGTSTP_handler;
@@ -374,32 +357,41 @@ void parent_SIGTSTP_handler (int num) {
     }
 }
 
-void set_action_to_default(struct sigaction* action){
-    action->sa_handler = SIG_DFL;
-    action->sa_flags = 0;
-    sigfillset(&action->sa_mask);  //TODO wtf does this do
+
+
+/*****************************************************
+ *            Active Process Management              *
+ *****************************************************/
+void add_process(BG_process_list* active_BG, pid_t PID){
+    process_node* new_node = (process_node*)(malloc(sizeof(process_node)));
+    new_node->PID = PID;
+    new_node->next = active_BG->first;
+    active_BG->first = new_node;
 }
 
-
-
-
-
-void set_SIGCHLD(struct sigaction* action){
-    action->sa_handler = SIGCHLD_handler;
-    action->sa_flags = 0;
-    sigfillset(&action->sa_mask);
-}
-
-void SIGCHLD_handler(int num){
-    printf("child terminated\n");
-    int wstatus = 1;
-    //pid_t child_PID = wait(&wstatus);
-
-    printf("wstatus %d\n", wstatus);
-    printf("WTERMSIG(WSTATUS) %d\n", WTERMSIG(wstatus));
-
-    if(WIFSIGNALED(wstatus)){
-      printf("Child %d terminated by signal %d\n", child_PID, WTERMSIG(wstatus));
+void free_process_list(BG_process_list* processes){
+    process_node* cur_node = processes->first;
+    process_node* tmp;
+    while(cur_node != NULL){
+        tmp = cur_node;
+        cur_node = cur_node->next;
+        free(tmp);
     }
-    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+}
+
+void close_finished_bg(BG_process_list* active_BG){
+    process_node* node_ptr;
+    node_ptr = active_BG->first;
+    int wstatus = 0;
+    while(node_ptr != NULL){
+        int wait_result = waitpid(node_ptr->PID, &wstatus, WNOHANG);
+        if (wait_result > 0){
+            if(WIFEXITED(wstatus)){
+                printf("Process %d exit value %d\n", node_ptr->PID, WEXITSTATUS(WSTATUS));
+            } else{
+                printf("terminated by signal %d\n", WTERMSIG(WSTATUS));
+            }
+        }
+        node_ptr = node_ptr->next;
+    }
 }
