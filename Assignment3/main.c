@@ -3,10 +3,13 @@
 #define COMMAND_BUFFER_SIZE 2048
 
 int main(){
-    struct sigaction ignore_action = {0};
-    ignore_action.sa_handler = SIG_IGN;
+    struct sigaction ignore_action = {0}, child_termination_action = {0}, background_mode_toggle_action = {0};
+
+    set_SIGTSTP_parent(&background_mode_toggle_action);
+    ignore_action.sa_handler = SIG_IGN; 
+
     sigaction(SIGINT, &ignore_action, NULL);
-    sigaction(SIGTSTP, &ignore_action, NULL);
+    sigaction(SIGTSTP, &background_mode_toggle_action, NULL);
 
     BG_process_list* active_BG = (BG_process_list*)(malloc(sizeof(BG_process_list)));
     active_BG->first = NULL;

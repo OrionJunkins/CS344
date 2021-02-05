@@ -230,8 +230,9 @@ void exec_external(Command* command, BG_process_list* active_BG){
         Given that a command is externally defined, execute it
     */
     // Produce an argument array for an exec function from command->arguments
-    struct sigaction default_action = {0};
+    struct sigaction default_action = {0}, ignore_action = {0};
     default_action.sa_handler = SIG_DFL;
+    ignore_action.sa_handler = SIG_IGN; 
 
     char* args[MAX_NUM_ARGS];
     args[0] = command->command_name;
@@ -240,6 +241,9 @@ void exec_external(Command* command, BG_process_list* active_BG){
     }
     args[command->arg_count + 1] = NULL;
 
+    sigset_t ignore_while_fg_active;
+    sigaddset(&ignore_while_fg_active, SIGTSTP);
+    sigprocmask(SIG_BLOCK, &ignore_while_fg_active, NULL);
     // Fork a new process
     pid_t spawnPid = fork();
     switch(spawnPid){
@@ -249,10 +253,12 @@ void exec_external(Command* command, BG_process_list* active_BG){
             break;
         case 0:
             // In the child process
-            if(!command->background){
+            if(!command->background){ //if foreground
                 sigaction(SIGINT, &default_action, NULL);
             }
-            sigaction(SIGTSTP, &default_action, NULL);
+
+            sigaction(SIGTSTP, &ignore_action, NULL);
+
             
             // Update IO streams based on command specification
             set_input_stream(command);
@@ -270,9 +276,14 @@ void exec_external(Command* command, BG_process_list* active_BG){
             if (command->background){
                 printf("Child spawned with PID: %d\n", spawnPid);
                 add_process(active_BG, spawnPid);
+                
             //If it is a foreground process, wait for the child to terminate
             } else{
                 spawnPid = waitpid(spawnPid, &WSTATUS, 0);
+                if (spawnPid > 0 && WIFSIGNALED(WSTATUS)) {
+                    printf("Process %d terminated by signal %d\n", spawnPid, WTERMSIG(WSTATUS));
+                }
+                sigprocmask(SIG_UNBLOCK, &ignore_while_fg_active, NULL);
             }
             break;
     }  
@@ -360,7 +371,6 @@ void parent_SIGTSTP_handler (int num) {
 }
 
 
-
 /*****************************************************
  *            Active Process Management              *
  *****************************************************/
@@ -391,9 +401,9 @@ void close_finished_bg(BG_process_list* active_BG){
         int wait_result = waitpid(node_ptr->PID, &wstatus, WNOHANG);
         if (wait_result > 0){
             if(WIFEXITED(wstatus)){
-                printf("Process %d exit value %d\n", node_ptr->PID, WEXITSTATUS(WSTATUS));
+                printf("Process %d exit value %d\n", node_ptr->PID, WEXITSTATUS(wstatus));
             } else{
-                printf("terminated by signal %d\n", WTERMSIG(WSTATUS));
+                printf("Process %d terminated by signal %d\n", node_ptr->PID, WTERMSIG(wstatus));
             }
         }
         node_ptr = node_ptr->next;
