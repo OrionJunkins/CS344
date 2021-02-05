@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/wait.h>
 #define COMMAND_BUFFER_SIZE 2048
 #define MAX_NUM_ARGS 512
 #define MAX_BG_PROCESSES 128

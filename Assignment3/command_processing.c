@@ -10,7 +10,6 @@ void get_command(char* command){
     */
     // Print initial shell prompt
     printf(":");
-
     // Get a line from the user
     ssize_t recieved_command_size;
     char* command_buffer = command;
@@ -244,6 +243,7 @@ void exec_external(Command* command, BG_process_list* active_BG){
     sigset_t ignore_while_fg_active;
     sigaddset(&ignore_while_fg_active, SIGTSTP);
     sigprocmask(SIG_BLOCK, &ignore_while_fg_active, NULL);
+
     // Fork a new process
     pid_t spawnPid = fork();
     switch(spawnPid){
@@ -267,21 +267,21 @@ void exec_external(Command* command, BG_process_list* active_BG){
             execvp(args[0], args);   
 
             // Print an error and exit if the command could not be executed
-            printf("Error: could not execute given command\n");        
+            printf("%s: no such file or directory\n", command->command_name);        
             exit(1);
             break;
         default:
             // In the parent process
             // If command is a background process, print the child PID and proceed
             if (command->background){
-                printf("Child spawned with PID: %d\n", spawnPid);
+                printf("background pid is %d\n", spawnPid);
                 add_process(active_BG, spawnPid);
                 
             //If it is a foreground process, wait for the child to terminate
             } else{
                 spawnPid = waitpid(spawnPid, &WSTATUS, 0);
                 if (spawnPid > 0 && WIFSIGNALED(WSTATUS)) {
-                    printf("Process %d terminated by signal %d\n", spawnPid, WTERMSIG(WSTATUS));
+                    printf("terminated by signal %d\n", WTERMSIG(WSTATUS));
                 }
                 sigprocmask(SIG_UNBLOCK, &ignore_while_fg_active, NULL);
             }
@@ -357,15 +357,16 @@ void set_output_stream(Command* command) {
 
 void set_SIGTSTP_parent(struct sigaction* action){
     action->sa_handler = parent_SIGTSTP_handler;
-    action->sa_flags = 0;
+    action->sa_flags = SA_RESTART;
     sigfillset(&action->sa_mask);
 }
 
 void parent_SIGTSTP_handler (int num) {
-    write(STDOUT_FILENO,"SIGTSTP\n", 9);
     if(BACKGROUND_ENABLED){
+        write(STDOUT_FILENO, "Entering foreground-only mode (& is now ignored)\n:", 50);
         BACKGROUND_ENABLED = false;
     } else {
+        write(STDOUT_FILENO, "Exiting foreground-only mode\n:", 30);
         BACKGROUND_ENABLED = true;
     }
 }
@@ -400,10 +401,11 @@ void close_finished_bg(BG_process_list* active_BG){
     while(node_ptr != NULL){
         int wait_result = waitpid(node_ptr->PID, &wstatus, WNOHANG);
         if (wait_result > 0){
+            printf("background pid %d is done: ", node_ptr->PID);
             if(WIFEXITED(wstatus)){
-                printf("Process %d exit value %d\n", node_ptr->PID, WEXITSTATUS(wstatus));
+                printf("exit value %d\n",  WEXITSTATUS(wstatus));
             } else{
-                printf("Process %d terminated by signal %d\n", node_ptr->PID, WTERMSIG(wstatus));
+                printf("terminated by signal %d\n", WTERMSIG(wstatus));
             }
         }
         node_ptr = node_ptr->next;
