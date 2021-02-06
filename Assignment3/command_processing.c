@@ -78,14 +78,14 @@ void execute(char* input_command, BG_process_list* active_BG) {
         Process and execute the given command
     */
     // Generate a completely blank Command
-    Command* command = {new_empty_Command()};
+    Command* command = new_empty_Command();
 
     // Parse the input_command string into the Command structure
     parse_command(input_command, command);
 
     // Decide if the command a builtin or not and execute accordingly
     if (is_builtin(command)){
-        exec_internal(command);
+        exec_internal(command, active_BG);
     } else {
         exec_external(command, active_BG);
     }
@@ -169,7 +169,7 @@ bool is_builtin(Command* command){
  *          Internal Command Execution               *
  *****************************************************/
 
-void exec_internal(Command* command){
+void exec_internal(Command* command, BG_process_list* active_BG){
     /* 
         Given that a command is internally defined, execute it
     */
@@ -179,6 +179,10 @@ void exec_internal(Command* command){
     } else if (strcmp(command->command_name, "status") == 0){
         status();
     } else if (strcmp(command->command_name, "exit") == 0){
+        free_process_list(active_BG);
+        free(active_BG);
+        free(command);
+        printf("EXITING\n");
         exit(0);
     } else {
         printf("Unknown internal command");
@@ -240,7 +244,7 @@ void exec_external(Command* command, BG_process_list* active_BG){
     }
     args[command->arg_count + 1] = NULL;
 
-    sigset_t ignore_while_fg_active;
+    sigset_t ignore_while_fg_active = {0};
     sigaddset(&ignore_while_fg_active, SIGTSTP);
     sigprocmask(SIG_BLOCK, &ignore_while_fg_active, NULL);
 
@@ -278,13 +282,14 @@ void exec_external(Command* command, BG_process_list* active_BG){
                 add_process(active_BG, spawnPid);
                 
             //If it is a foreground process, wait for the child to terminate
-            } else{
+            } else {
                 spawnPid = waitpid(spawnPid, &WSTATUS, 0);
                 if (spawnPid > 0 && WIFSIGNALED(WSTATUS)) {
                     printf("terminated by signal %d\n", WTERMSIG(WSTATUS));
                 }
-                sigprocmask(SIG_UNBLOCK, &ignore_while_fg_active, NULL);
+                
             }
+            sigprocmask(SIG_UNBLOCK, &ignore_while_fg_active, NULL);
             break;
     }  
 }

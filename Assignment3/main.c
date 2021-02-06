@@ -20,7 +20,7 @@ int main(){
     
     // Loop until an exit command is executed
     int i=0;
-    while(i<100){
+    while(1){
         // Get a new command from stdin
         memset(command_buffer, '\0', COMMAND_BUFFER_SIZE);
         get_command(command_buffer);
@@ -36,8 +36,6 @@ int main(){
         close_finished_bg(active_BG);
         i++;
     }
-
-    free_process_list(active_BG);
 
     return 0;
 }

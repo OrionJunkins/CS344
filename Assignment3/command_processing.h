@@ -44,7 +44,7 @@ typedef struct BG_process_list{
 void parse_command(char* input_command, Command* command);
 bool is_builtin(Command* command);
 void exec_external(Command* command, BG_process_list* active_BG);
-void exec_internal(Command* command);
+void exec_internal(Command* command, BG_process_list* active_BG);
 void set_output_stream(Command* command);
 void set_input_stream(Command* command);
 void status();
@@ -59,6 +59,8 @@ void set_SIGINT_parent(struct sigaction* SIGINT_parent_action);
 void set_SIGTSTP_parent(struct sigaction* SIGTSTP_parent_action);
 void set_action_to_default(struct sigaction* action);
 
+
+void free_process_list(BG_process_list* processes);
 void set_SIGCHLD(struct sigaction* SIGCHLD_action);
 void SIGCHLD_handler(int num);
 void add_process(BG_process_list* processes, pid_t PID);
