@@ -1,4 +1,5 @@
 #include "command_processing.h"
+
 /*****************************************************
  *                Command fetching                   *
  *****************************************************/
@@ -116,7 +117,6 @@ void parse_command(char* input_command, Command* command) {
     /*
         Tokenize the input_command string into a Command structure
     */
-
     // Setup for strtok_r
     char* save_ptr;
     char* pt;
@@ -179,10 +179,10 @@ void exec_internal(Command* command, BG_process_list* active_BG){
     } else if (strcmp(command->command_name, "status") == 0){
         status();
     } else if (strcmp(command->command_name, "exit") == 0){
+        // Free all malloc'd resources and exit
         free_process_list(active_BG);
         free(active_BG);
         free(command);
-        printf("EXITING\n");
         exit(0);
     } else {
         printf("Unknown internal command");
@@ -233,10 +233,6 @@ void exec_external(Command* command, BG_process_list* active_BG){
         Given that a command is externally defined, execute it
     */
     // Produce an argument array for an exec function from command->arguments
-    struct sigaction default_action = {0}, ignore_action = {0};
-    default_action.sa_handler = SIG_DFL;
-    ignore_action.sa_handler = SIG_IGN; 
-
     char* args[MAX_NUM_ARGS];
     args[0] = command->command_name;
     for (int i = 0; i < command->arg_count; i++){
@@ -244,6 +240,12 @@ void exec_external(Command* command, BG_process_list* active_BG){
     }
     args[command->arg_count + 1] = NULL;
 
+    // Set sig handlers to be used inside of the child
+    struct sigaction default_action = {0}; //, ignore_action = {0}
+    default_action.sa_handler = SIG_DFL;
+    //ignore_action.sa_handler = SIG_IGN;  TODO - delete if tests are being passed
+
+    // Mask SIGTSTP while foreground process is active
     sigset_t ignore_while_fg_active = {0};
     sigaddset(&ignore_while_fg_active, SIGTSTP);
     sigprocmask(SIG_BLOCK, &ignore_while_fg_active, NULL);
@@ -256,17 +258,19 @@ void exec_external(Command* command, BG_process_list* active_BG){
             exit(1);
             break;
         case 0:
-            
             // In the child process
-            if(!command->background){ //if foreground
+            if(!command->background){ 
+                // Foreground process, so set SIGINT to default termination handler
                 sigaction(SIGINT, &default_action, NULL);
             }
 
-            sigaction(SIGTSTP, &ignore_action, NULL);
+            // Regardless of FG/BG, set SIGTSTP to be ignored.  TODO?
+            //sigaction(SIGTSTP, &ignore_action, NULL);
             
             // Update IO streams based on command specification
             set_input_stream(command);
             set_output_stream(command);
+
             // Execute the command
             execvp(args[0], args);   
 
@@ -276,19 +280,19 @@ void exec_external(Command* command, BG_process_list* active_BG){
             break;
         default:
             // In the parent process
-            // If command is a background process, print the child PID and proceed
+            // If command is a background process, print the child PID and add the process to the active_BG list
             if (command->background){
                 printf("background pid is %d\n", spawnPid);
                 add_process(active_BG, spawnPid);
-                
-            //If it is a foreground process, wait for the child to terminate
             } else {
+                // It is a foreground process, so wait for the child to terminate
                 spawnPid = waitpid(spawnPid, &WSTATUS, 0);
                 if (spawnPid > 0 && WIFSIGNALED(WSTATUS)) {
                     printf("terminated by signal %d\n", WTERMSIG(WSTATUS));
                 }
                 
             }
+            // Unblock SIGTSTP
             sigprocmask(SIG_UNBLOCK, &ignore_while_fg_active, NULL);
             break;
     }  
@@ -316,9 +320,8 @@ void set_input_stream(Command* command) {
             perror("cannot open %s for input\n"); 
             exit(1); 
         }
-
-    // If no infile is present, set stdin to /dev/null
     } else if (command->background){
+        // No infile is present, set stdin to /dev/null
         int devNull = open("/dev/null", O_RDONLY);
         int result = dup2(devNull, 1);
     }
@@ -346,9 +349,8 @@ void set_output_stream(Command* command) {
             perror("cannot open %s for input\n"); 
             exit(1); 
         }
-
-    // If no infile is present, set stdin to /dev/null
     } else if (command->background) {
+        // No infile is present, set stdin to /dev/null
         int devNull = open("/dev/null", O_RDONLY);
         int result = dup2(devNull, 1);
     }
@@ -361,12 +363,18 @@ void set_output_stream(Command* command) {
 
 
 void set_SIGTSTP_parent(struct sigaction* action){
+    /*
+        Set the appropriate functionality for the given sigaction
+    */
     action->sa_handler = parent_SIGTSTP_handler;
     action->sa_flags = SA_RESTART;
     sigfillset(&action->sa_mask);
 }
 
 void parent_SIGTSTP_handler (int num) {
+    /*
+        Toggle background/foreground only mode and print a message giving the new status
+    */
     if(BACKGROUND_ENABLED){
         write(STDOUT_FILENO, "Entering foreground-only mode (& is now ignored)\n", 50);
         BACKGROUND_ENABLED = false;
@@ -381,13 +389,22 @@ void parent_SIGTSTP_handler (int num) {
  *            Active Process Management              *
  *****************************************************/
 void add_process(BG_process_list* active_BG, pid_t PID){
+    /*
+        Given an existing list, add a new PID to it
+    */
+    // Create a new process_node with the given PID
     process_node* new_node = (process_node*)(malloc(sizeof(process_node)));
     new_node->PID = PID;
+
+    // Place the new node at the front of the list
     new_node->next = active_BG->first;
     active_BG->first = new_node;
 }
 
 void free_process_list(BG_process_list* processes){
+    /*
+        Free all memory allocated to any nodes of an existing process list
+    */
     process_node* cur_node = processes->first;
     process_node* tmp;
     while(cur_node != NULL){
@@ -397,14 +414,20 @@ void free_process_list(BG_process_list* processes){
     }
 }
 
-//TODO currently only bg processes are in the list, so there is no notification for fg child death
-// Perhaps add a separate sig handler for child death?
+//TODO currently only bg processes are in the list, so there is no notification for fg child death -> resolved?
 void close_finished_bg(BG_process_list* active_BG){
+    /*
+        Close all finished BG processes and print the status of each
+    */
+    // Create a ptr to the first node in the list and iterate the entire list
     process_node* node_ptr;
     node_ptr = active_BG->first;
     int wstatus = 0;
     while(node_ptr != NULL){
+        // Wait for the current PID to see if it is complete
         int wait_result = waitpid(node_ptr->PID, &wstatus, WNOHANG);
+
+        // If it is completed, print the exit status
         if (wait_result > 0){
             printf("background pid %d is done: ", node_ptr->PID);
             if(WIFEXITED(wstatus)){
