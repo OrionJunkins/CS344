@@ -1,0 +1,27 @@
+Orion Junkins
+Assignment 3: Small Shell
+
+
+
+Quick Build: $gcc -std=gnu99 -o smallsh smallsh.c
+
+
+
+A basic shell implementation which emulates the core functionality of BASH.
+
+To build:
+    
+    Compile the file smallsh.c into the desired executable.
+    
+    $gcc -std=gnu99 -o smallsh smallsh.c
+
+    smallsh.c will include all other needed files
+    
+    * USE GNU99, gcc defaults may not compile *
+
+To run:
+    Run the executable named in the build step.
+
+    $./smallsh
+
+    Interact with the shell
