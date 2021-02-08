@@ -2,6 +2,7 @@ command_processing.c
 command_processing.h
 junk
 junk2
-main.c
 p3testscript
+README
 smallsh
+smallsh.c
