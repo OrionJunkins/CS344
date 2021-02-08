@@ -361,7 +361,6 @@ void set_output_stream(Command* command) {
  *                  Signal Handling                  *
  *****************************************************/
 
-
 void set_SIGTSTP_parent(struct sigaction* action){
     /*
         Set the appropriate functionality for the given sigaction
