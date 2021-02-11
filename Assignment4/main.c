@@ -3,7 +3,7 @@
 int main () {
     bool stop_command_recieved = false;
 
-    
+    printf("RUNNING");
 
     pthread_t p, c;
     int lines_processed = 0;
@@ -13,7 +13,7 @@ int main () {
 
         pthread_create(&p, NULL, get_input_lines, NULL);
 
-        pthread_create(&c, NULL, separate_lines, NULL);
+        //pthread_create(&c, NULL, separate_lines, NULL);
 
         //printf("lines separated: %s\n", separated_buffer);
         //replace_plusses(separated_buffer, output_buffer);

@@ -4,17 +4,18 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/nfs/stak/users/junkinso/CS344-1/Assignment3/smallsh",
+            "program": "/Users/orionjunkins/Desktop/CS344/Assignment4/main",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "externalTerminal",
-            "MIMode": "gdb",
+            "externalConsole": true,
+            "MIMode": "lldb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",

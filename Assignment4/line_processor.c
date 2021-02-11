@@ -10,9 +10,9 @@ void* get_input_lines(void* arg) {
         ssize_t line_size;
         size_t buffer_size = MAX_LINE_SIZE;
         line_size = getline(&getline_buffer, &buffer_size, stdin);
+        printf("%s\n", tmp_buffer);
         // Lock the input buffer mutex. If it is already locked, wait here
         pthread_mutex_lock(&input_buffer_mutex); 
-
         // Copy the line gotten to input_buf
         strcpy(input_buffer, tmp_buffer);
         
@@ -24,6 +24,7 @@ void* get_input_lines(void* arg) {
 
         // Release the lock
         pthread_mutex_unlock(&input_buffer_mutex);
+        printf("%s\n", tmp_buffer);
     }
 
     return NULL;
