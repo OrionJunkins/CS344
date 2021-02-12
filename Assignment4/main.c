@@ -1,27 +1,38 @@
 #include "line_processor.c"
 
 int main () {
-    bool stop_command_recieved = false;
+#if 0 // Use a test.txt as stdin
+    int sourceFD = open("test.txt", O_RDONLY);
+        if (sourceFD == -1) { 
+            printf("cannot open for input\n"); 
 
-    printf("RUNNING");
+        }
+        // Redirect stdin to target file
+        int result = dup2(sourceFD, 0);
+        if (result == -1) { 
+            perror("cannot open %s for input\n"); 
 
-    pthread_t p, c;
+        }
+#endif
+
+    printf("RUNNING\n");
+
+    pthread_t in, sep, proc, out;
     int lines_processed = 0;
-    while(!stop_command_recieved && lines_processed < MAX_NUMBER_LINES) 
-    {
-        memset(input_buffer, '\0', MAX_LINE_SIZE);
 
-        pthread_create(&p, NULL, get_input_lines, NULL);
+    memset(input_buffer, '\0', MAX_LINE_SIZE);
 
-        //pthread_create(&c, NULL, separate_lines, NULL);
+    pthread_create(&in, NULL, get_input_lines, NULL);
 
-        //printf("lines separated: %s\n", separated_buffer);
-        //replace_plusses(separated_buffer, output_buffer);
-        //printf("plusses replaced: %s\n", output_buffer);
-        //output_lines(output_buffer);
-        pthread_join(p, NULL);
-        pthread_join(c, NULL);
-        lines_processed++;
-    }
+    pthread_create(&sep, NULL, separate_lines, NULL);
+
+    pthread_create(&proc, NULL, process_characters, NULL);
+
+    //replace_plusses(separated_buffer, output_buffer);
+    //printf("plusses replaced: %s\n", output_buffer);
+    //output_lines(output_buffer);
+    pthread_join(in, NULL);
+    pthread_join(sep, NULL);
+    pthread_join(proc, NULL);
     return 0;
 }
