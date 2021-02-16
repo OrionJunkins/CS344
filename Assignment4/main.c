@@ -28,11 +28,14 @@ int main () {
 
     pthread_create(&proc, NULL, process_characters, NULL);
 
+    pthread_create(&out, NULL, output_lines, NULL);
+
     //replace_plusses(separated_buffer, output_buffer);
     //printf("plusses replaced: %s\n", output_buffer);
     //output_lines(output_buffer);
     pthread_join(in, NULL);
     pthread_join(sep, NULL);
     pthread_join(proc, NULL);
+    pthread_join(out, NULL);
     return 0;
 }
