@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 char * STOP_COMMAND = "STOP\n";
-
+char * NEWLINE_STOP_COMMAND = "\nSTOP\n";
 
 
 //Todo: alter size
@@ -39,3 +39,17 @@ bool output_thread_stop = false;
 void replace_newlines(char* output_buffer, char* input_buffer);
 void replace_plusses(char* output_buffer, char* input_buffer);
 bool check_stop_conditions(char* buffer_contents);
+
+char* pop_stop_suffix_if_present (char *input){
+    if(strlen(input) == 5){
+        if(strcmp(input, STOP_COMMAND) == 0){
+            input[0] = '\0';
+            return STOP_COMMAND;
+        }
+    } else if(strstr(input, NEWLINE_STOP_COMMAND)){
+            char* stop_com_loc = strstr(input, NEWLINE_STOP_COMMAND);
+            stop_com_loc[0] = '\0';
+            return NEWLINE_STOP_COMMAND;
+    } 
+    return NULL;
+}

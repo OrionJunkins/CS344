@@ -18,7 +18,6 @@ int main () {
     printf("RUNNING\n");
 
     pthread_t in, sep, proc, out;
-    int lines_processed = 0;
 
     memset(input_buffer, '\0', MAX_LINE_SIZE);
 
