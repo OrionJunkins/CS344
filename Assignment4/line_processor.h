@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #define MAX_BUFFER_SIZE 50000
+#define MAX_LINE_SIZE 1000
 char * STOP_COMMAND = "STOP\n";
 char * NEWLINE_STOP_COMMAND = "\nSTOP\n";
 
@@ -29,6 +30,8 @@ pthread_cond_t output_buffer_has_data = PTHREAD_COND_INITIALIZER;
 void replace_newlines(char* output_buffer, char* input_buffer);
 void replace_plusses(char* output_buffer, char* input_buffer);
 bool check_stop_conditions(char* buffer_contents);
+void get_next_line(char* destination);
+
 
 char* pop_stop_suffix_if_present (char *input){
     if(strlen(input) == 5){

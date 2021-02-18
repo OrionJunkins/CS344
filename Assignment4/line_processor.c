@@ -1,40 +1,47 @@
 #include "line_processor.h"
 
 /**********************************************************************
- *                      Get Input to Process                          *
+ *                             Input Thread                            *
  **********************************************************************/
 void* input_thread(void* arg) {
     /*
         Pull all data from stdin as it become available
         Store the resulting data in input_buffer
     */
-   bool input_thread_stopped = false;
-    char line_buffer[MAX_BUFFER_SIZE];
+    // Temporary line buffer
+    char line_buffer[MAX_LINE_SIZE]; 
+
+    // Set up a conditional loop. Bool goes to true once "STOP\n" is recieved
+    bool input_thread_stopped = false; 
     while(!input_thread_stopped){
-        // Get a line to a temporary buffer
-        memset(line_buffer, '\0', MAX_BUFFER_SIZE);
-        char* getline_buffer = line_buffer;
-        ssize_t line_size;
-        size_t buffer_size = MAX_BUFFER_SIZE;
-        line_size = getline(&getline_buffer, &buffer_size, stdin);
-        if(strcmp(getline_buffer, STOP_COMMAND) == 0){
+        // Capture the next line from STDIN into line_buffer
+        get_next_line(line_buffer);
+
+        // Check for a stop command and update the loop conditional
+        if(strcmp(line_buffer, STOP_COMMAND) == 0){
             input_thread_stopped = true;
-        }
+        }     
 
         // Lock the input buffer mutex. If it is already locked, wait here
         pthread_mutex_lock(&input_buffer_mutex); 
 
-        // Copy the line gotten to input_buffer
+        // Concat the line onto whatever is already in input_buffer
         strcat(input_buffer, line_buffer);
         
-        // Notify consumer that input_buf has data
+        // Notify consumer that the input buffer has data
         pthread_cond_signal(&input_buffer_has_data); 
 
         // Release the lock on input_buffer
         pthread_mutex_unlock(&input_buffer_mutex);
     }
-    input_thread_stopped = true;
     return NULL;
+}
+
+void get_next_line(char* destination){
+        memset(destination, '\0', MAX_BUFFER_SIZE);
+        ssize_t line_size;
+        size_t buffer_size = MAX_BUFFER_SIZE;
+        line_size = getline(&destination, &buffer_size, stdin);
 }
 
 
