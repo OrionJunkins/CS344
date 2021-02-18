@@ -226,7 +226,6 @@ void replace_plusses(char* output_buffer, char* input_buffer){
 
 
 
-
 /**********************************************************************
  *                      Output Data to STDOUT                         *
  **********************************************************************/
@@ -235,11 +234,17 @@ void* output_thread(void* arg){
         Pull from output_buffer
         Output 80 chars at a time to STDOUT as they become available
     */
-    bool output_thread_stopped = false;
+    // Set up a temporary buffer to store copies of the entire output buffer
     char tmp_buffer[MAX_BUFFER_SIZE];    
+    
+    // Set up a line of size 80 for outputting individual lines
     char line_buffer[80];
-    int line_index = 0;
 
+    // Maintain an index into line_buffer to preserve place across multiple pulls from output_buffer
+    int line_index = 0;
+    
+    // Set up a conditional loop. Bool goes to true once "STOP\n" is recieved
+    bool output_thread_stopped = false;
     while(!output_thread_stopped){
         // Clear the tmp_bffer
         memset(tmp_buffer, '\0', MAX_BUFFER_SIZE);
@@ -252,8 +257,7 @@ void* output_thread(void* arg){
             pthread_cond_wait(&output_buffer_has_data, &output_buffer_mutex); 
         }
 
-        // We now have the lock
-        // Copy data to temp buffer
+        // Copy data from the output_buffer to temp buffer
         strcpy(tmp_buffer, output_buffer);
         
         // Clear output buffer
@@ -261,26 +265,29 @@ void* output_thread(void* arg){
 
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&output_buffer_mutex);
-
   
+        // Pop a stop command off the end if present
         char* stop_suffix = pop_stop_suffix_if_present(tmp_buffer);
+
+        // Toggle the loop condition if stop command is recieved
         if (stop_suffix != NULL){
             output_thread_stopped = true;
         }
 
-        // Print 80 chars at a time *TODO: extract to function*
+        // Print 80 chars at a time whenever possible
         for(int i = 0; i < strlen(tmp_buffer); i++){
+            // Copy the current char
             line_buffer[line_index] = tmp_buffer[i];
             if (line_index >= 79){
-                //printf("line_index %d\n", line_index);
+                // If a line length of 80 has been reached, print the line
                 write(STDOUT_FILENO, line_buffer, 80);
-
                 write(STDOUT_FILENO, "\n", 1);
-                //printf("line outputed: %s\n", line_buffer);
+
+                // Clear line_buffer and reset its index to the start
                 memset(line_buffer, '\0', 80);
-                
                 line_index = 0;
             } else {
+                // Increment the line buffer index
                 line_index++;
             }
         }
