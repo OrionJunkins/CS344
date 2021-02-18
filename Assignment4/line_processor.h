@@ -19,19 +19,16 @@ char * NEWLINE_STOP_COMMAND = "\nSTOP\n";
 char input_buffer[MAX_LINE_SIZE];        // get_input_lines > input_buffer > separate_lines
 pthread_mutex_t input_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t input_buffer_has_data = PTHREAD_COND_INITIALIZER;
-bool input_thread_stopped = false;
 
 char separated_buffer[MAX_LINE_SIZE];    // separate_lines > separated_buffer > replace_plusses
 pthread_mutex_t separated_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t separated_buffer_has_data = PTHREAD_COND_INITIALIZER;
-bool separate_thread_stop = false;
 
 
 
 char output_buffer[MAX_LINE_SIZE];       // replace_plusses > output_buffer > replace_plusses
 pthread_mutex_t output_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t output_buffer_has_data = PTHREAD_COND_INITIALIZER;
-bool output_thread_stop = false;
 
 
 

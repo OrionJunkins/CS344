@@ -3,7 +3,7 @@
 /**********************************************************************
  *                      Get Input to Process                          *
  **********************************************************************/
-void* get_input_lines(void* arg) {
+void* input_thread(void* arg) {
     /*
         Pull all data from stdin as it become available
         Store the resulting data in input_buffer
@@ -42,7 +42,7 @@ void* get_input_lines(void* arg) {
  *                         Handle Newlines                            *
  **********************************************************************/
 
-void* separate_lines(void* arg){
+void* line_separator_thread(void* arg){
     /*
         Pull all data from input_buffer as it become available
         Replace any newline character with a single space
@@ -97,27 +97,10 @@ void* separate_lines(void* arg){
 
         pthread_mutex_unlock(&separated_buffer_mutex);
 
-        // stop_command_received = check_stop_conditions(processed_tmp_buffer);
     }
-    printf("THREAD 2 EXITTED\n");
     return NULL;
 }
 
-bool check_stop_conditions(char* buffer_contents){
-    int len = strlen(buffer_contents);
-    if (len >= 5){
-        char* end_of_contents = buffer_contents + len - 5;
-        char* substring;
-        substring = strstr(end_of_contents, "STOP");
-        if(substring != NULL                // "STOP\0" is the end of the string
-            && strlen(input_buffer) == 0    // Input buffer is empty
-            && input_thread_stopped){        // Input thread has already stopped
-        
-            return true;
-        }
-    }
-    return false;
-}
 
 
 void replace_newlines(char* output_buffer, char* input_buffer){
@@ -139,7 +122,7 @@ void replace_newlines(char* output_buffer, char* input_buffer){
 /**********************************************************************
  *                   Handle instances of "++"                         *
  **********************************************************************/
-void* process_characters(void* arg){
+void* plus_signal_thread(void* arg){
     /*
         Pull all data from separated_buffer as it become available
         Replace any occurence of "++" with a single "^"
@@ -202,7 +185,6 @@ void* process_characters(void* arg){
 
 
     }
-    printf("THREAD 3 EXITTED\n");
     return NULL;
 }
 
@@ -239,17 +221,17 @@ void replace_plusses(char* output_buffer, char* input_buffer){
 /**********************************************************************
  *                      Output Data to STDOUT                         *
  **********************************************************************/
-void* output_lines(void* arg){
+void* output_thread(void* arg){
     /*
         Pull from output_buffer
         Output 80 chars at a time to STDOUT as they become available
     */
+    bool output_thread_stopped = false;
     char tmp_buffer[MAX_LINE_SIZE];    
     char line_buffer[80];
     int line_index = 0;
 
-    int lines_processed = 0; // TODO
-    while(lines_processed < MAX_NUM_LINES){
+    while(!output_thread_stopped){
         // Clear the tmp_bffer
         memset(tmp_buffer, '\0', MAX_LINE_SIZE);
 
@@ -273,7 +255,9 @@ void* output_lines(void* arg){
 
   
         char* stop_suffix = pop_stop_suffix_if_present(tmp_buffer);
-
+        if (stop_suffix != NULL){
+            output_thread_stopped = true;
+        }
 
         // Print 80 chars at a time *TODO: extract to function*
         for(int i = 0; i < strlen(tmp_buffer); i++){
@@ -291,9 +275,6 @@ void* output_lines(void* arg){
                 line_index++;
             }
         }
-        //printf("Leftovers in line buffer: %s\n", line_buffer);
-
-        lines_processed++;
     }
     return NULL;
 }
