@@ -135,20 +135,25 @@ void replace_newlines(char* output_buffer, char* input_buffer){
 
 /**********************************************************************
  *                       Plus Sign Thread                             *
- **********************************************************************/
+ *********************************************************************/
 void* plus_signal_thread(void* arg){
     /*
         Pull all data from separated_buffer as it become available
         Replace any occurence of "++" with a single "^"
         Store the resulting data in output_buffer
     */
-    bool char_proc_thread_stopped = false;
+    /// Set up two internal buffers to handle data while processing
     char raw_tmp_buffer[MAX_BUFFER_SIZE];
     char processed_tmp_buffer[MAX_BUFFER_SIZE];
-    while(!char_proc_thread_stopped){
+
+    // Set up a conditional loop. Bool goes to true once "STOP\n" is recieved
+    bool plus_signal_thread_stopped = false;
+    while(!plus_signal_thread_stopped){
+        // Clear both internal buffers
         memset(raw_tmp_buffer, '\0', MAX_BUFFER_SIZE);
         memset(processed_tmp_buffer, '\0', MAX_BUFFER_SIZE);
-        // Lock separated buffer
+
+        // Lock the separated buffer
         pthread_mutex_lock(&separated_buffer_mutex); 
 
         // Wait for separated buffer to have data
@@ -156,8 +161,7 @@ void* plus_signal_thread(void* arg){
             pthread_cond_wait(&separated_buffer_has_data, &separated_buffer_mutex); 
         }
 
-        // We now have the lock
-        // Copy data to temp buffer
+        // Copy data from the separated buffer to the raw temp buffer
         strcpy(raw_tmp_buffer, separated_buffer);
         
         // Clear separated buffer
@@ -166,20 +170,19 @@ void* plus_signal_thread(void* arg){
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&separated_buffer_mutex);
 
-        // Process copied data
-        
-
-
+        // Pop off the stop command and anything that follows if one is present
         char* stop_suffix = pop_stop_suffix_if_present(raw_tmp_buffer);
 
         // Process copied data
         replace_plusses(processed_tmp_buffer, raw_tmp_buffer);
 
+        // If a stop command was found, append it back onto the end and modify the loop conditional
         if (stop_suffix != NULL){
-            char_proc_thread_stopped = true;
+            plus_signal_thread_stopped = true;
             strcat(processed_tmp_buffer, stop_suffix);
         }
         
+        // Lock the output buffer mutex
         pthread_mutex_lock(&output_buffer_mutex);
 
         // copy proccessed data into output buffer
@@ -187,8 +190,8 @@ void* plus_signal_thread(void* arg){
 
         // Notify output thread that output buffer has data 
         pthread_cond_signal(&output_buffer_has_data); 
-        // unlock
 
+        // Unlock the mutex
         pthread_mutex_unlock(&output_buffer_mutex);
     }
     return NULL;
