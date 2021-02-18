@@ -9,13 +9,13 @@ void* input_thread(void* arg) {
         Store the resulting data in input_buffer
     */
    bool input_thread_stopped = false;
-    char line_buffer[MAX_LINE_SIZE];
+    char line_buffer[MAX_BUFFER_SIZE];
     while(!input_thread_stopped){
         // Get a line to a temporary buffer
-        memset(line_buffer, '\0', MAX_LINE_SIZE);
+        memset(line_buffer, '\0', MAX_BUFFER_SIZE);
         char* getline_buffer = line_buffer;
         ssize_t line_size;
-        size_t buffer_size = MAX_LINE_SIZE;
+        size_t buffer_size = MAX_BUFFER_SIZE;
         line_size = getline(&getline_buffer, &buffer_size, stdin);
         if(strcmp(getline_buffer, STOP_COMMAND) == 0){
             input_thread_stopped = true;
@@ -50,11 +50,11 @@ void* line_separator_thread(void* arg){
     */
     bool separation_thread_stopped = false;
 
-    char raw_tmp_buffer[MAX_LINE_SIZE];
-    char processed_tmp_buffer[MAX_LINE_SIZE];
+    char raw_tmp_buffer[MAX_BUFFER_SIZE];
+    char processed_tmp_buffer[MAX_BUFFER_SIZE];
     while(!separation_thread_stopped){
-        memset(raw_tmp_buffer, '\0', MAX_LINE_SIZE);
-        memset(processed_tmp_buffer, '\0', MAX_LINE_SIZE);
+        memset(raw_tmp_buffer, '\0', MAX_BUFFER_SIZE);
+        memset(processed_tmp_buffer, '\0', MAX_BUFFER_SIZE);
         // Lock buf 1
         pthread_mutex_lock(&input_buffer_mutex); 
 
@@ -68,7 +68,7 @@ void* line_separator_thread(void* arg){
         strcpy(raw_tmp_buffer, input_buffer);
         
         // Clear input buffer
-        memset(input_buffer, '\0', MAX_LINE_SIZE);
+        memset(input_buffer, '\0', MAX_BUFFER_SIZE);
 
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&input_buffer_mutex);
@@ -107,7 +107,7 @@ void replace_newlines(char* output_buffer, char* input_buffer){
     /*
         Copy input to output but replace all newline characters with a single space
     */
-    for (int i=0; i <  MAX_LINE_SIZE; i++) {
+    for (int i=0; i <  MAX_BUFFER_SIZE; i++) {
         if (input_buffer[i] == '\n'){
             output_buffer[i] = ' ';
         } else {
@@ -120,7 +120,7 @@ void replace_newlines(char* output_buffer, char* input_buffer){
 
 
 /**********************************************************************
- *                   Handle instances of "++"                         *
+ *                       Plus Sign Thread                             *
  **********************************************************************/
 void* plus_signal_thread(void* arg){
     /*
@@ -129,11 +129,11 @@ void* plus_signal_thread(void* arg){
         Store the resulting data in output_buffer
     */
     bool char_proc_thread_stopped = false;
-    char raw_tmp_buffer[MAX_LINE_SIZE];
-    char processed_tmp_buffer[MAX_LINE_SIZE];
+    char raw_tmp_buffer[MAX_BUFFER_SIZE];
+    char processed_tmp_buffer[MAX_BUFFER_SIZE];
     while(!char_proc_thread_stopped){
-        memset(raw_tmp_buffer, '\0', MAX_LINE_SIZE);
-        memset(processed_tmp_buffer, '\0', MAX_LINE_SIZE);
+        memset(raw_tmp_buffer, '\0', MAX_BUFFER_SIZE);
+        memset(processed_tmp_buffer, '\0', MAX_BUFFER_SIZE);
         // Lock separated buffer
         pthread_mutex_lock(&separated_buffer_mutex); 
 
@@ -147,7 +147,7 @@ void* plus_signal_thread(void* arg){
         strcpy(raw_tmp_buffer, separated_buffer);
         
         // Clear separated buffer
-        memset(separated_buffer, '\0', MAX_LINE_SIZE);
+        memset(separated_buffer, '\0', MAX_BUFFER_SIZE);
 
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&separated_buffer_mutex);
@@ -165,12 +165,6 @@ void* plus_signal_thread(void* arg){
             char_proc_thread_stopped = true;
             strcat(processed_tmp_buffer, stop_suffix);
         }
-
-
-
-        
-        //printf("RP LINES GOT: %s\n", processed_tmp_buffer);
-        // Lock output buffer-> will wait and make sure lock is available. RP thread should be ready generally
         
         pthread_mutex_lock(&output_buffer_mutex);
 
@@ -182,8 +176,6 @@ void* plus_signal_thread(void* arg){
         // unlock
 
         pthread_mutex_unlock(&output_buffer_mutex);
-
-
     }
     return NULL;
 }
@@ -199,9 +191,9 @@ void replace_plusses(char* output_buffer, char* input_buffer){
     int output_index = 0;
 
     // So long as the input is not fully processed
-    while(input_index < MAX_LINE_SIZE) {
+    while(input_index < MAX_BUFFER_SIZE) {
         // So long as we are not on the last char, check if a "++" is present
-        if(input_index < MAX_LINE_SIZE - 1 && input_buffer[input_index] == '+' && input_buffer[input_index+1] == '+'){
+        if(input_index < MAX_BUFFER_SIZE - 1 && input_buffer[input_index] == '+' && input_buffer[input_index+1] == '+'){
             // Copy only a single '^' if so
             output_buffer[output_index] = '^';
             input_index += 2;
@@ -227,13 +219,13 @@ void* output_thread(void* arg){
         Output 80 chars at a time to STDOUT as they become available
     */
     bool output_thread_stopped = false;
-    char tmp_buffer[MAX_LINE_SIZE];    
+    char tmp_buffer[MAX_BUFFER_SIZE];    
     char line_buffer[80];
     int line_index = 0;
 
     while(!output_thread_stopped){
         // Clear the tmp_bffer
-        memset(tmp_buffer, '\0', MAX_LINE_SIZE);
+        memset(tmp_buffer, '\0', MAX_BUFFER_SIZE);
 
         // Lock output buffer
         pthread_mutex_lock(&output_buffer_mutex); 
@@ -248,7 +240,7 @@ void* output_thread(void* arg){
         strcpy(tmp_buffer, output_buffer);
         
         // Clear output buffer
-        memset(output_buffer, '\0', MAX_LINE_SIZE);
+        memset(output_buffer, '\0', MAX_BUFFER_SIZE);
 
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&output_buffer_mutex);
