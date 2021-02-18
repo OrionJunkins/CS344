@@ -1,7 +1,7 @@
 #include "line_processor.h"
 
 /**********************************************************************
- *                             Input Thread                            *
+ *                         Input Thread                               *
  **********************************************************************/
 void* input_thread(void* arg) {
     /*
@@ -38,6 +38,10 @@ void* input_thread(void* arg) {
 }
 
 void get_next_line(char* destination){
+    /*
+        Input Thread helper to pull single lines from stdin
+        Clears the given destination and populates it using getline()
+    */
         memset(destination, '\0', MAX_BUFFER_SIZE);
         ssize_t line_size;
         size_t buffer_size = MAX_BUFFER_SIZE;
@@ -45,33 +49,36 @@ void get_next_line(char* destination){
 }
 
 
-/**********************************************************************
- *                         Handle Newlines                            *
- **********************************************************************/
 
+/**********************************************************************
+ *                    Line Separator Thread                           *
+ **********************************************************************/
 void* line_separator_thread(void* arg){
     /*
         Pull all data from input_buffer as it become available
         Replace any newline character with a single space
         Store the resulting data in separated_buffer
     */
-    bool separation_thread_stopped = false;
-
+    // Set up two internal buffers to handle data while processing
     char raw_tmp_buffer[MAX_BUFFER_SIZE];
     char processed_tmp_buffer[MAX_BUFFER_SIZE];
+
+    // Set up a conditional loop. Bool goes to true once "STOP\n" is recieved
+    bool separation_thread_stopped = false;
     while(!separation_thread_stopped){
+        // Clear both internal buffers
         memset(raw_tmp_buffer, '\0', MAX_BUFFER_SIZE);
         memset(processed_tmp_buffer, '\0', MAX_BUFFER_SIZE);
-        // Lock buf 1
+        
+        // Lock the input buffer
         pthread_mutex_lock(&input_buffer_mutex); 
 
-        // Wait for input_buf to have data
+        // Wait for the input buffer to have data
         while(strlen(input_buffer) == 0){
             pthread_cond_wait(&input_buffer_has_data, &input_buffer_mutex); 
         }
 
-        // We now have the lock
-        // Copy data to temp buffer
+        // Copy data from the input buffer into the raw temporary buffer
         strcpy(raw_tmp_buffer, input_buffer);
         
         // Clear input buffer
@@ -80,48 +87,48 @@ void* line_separator_thread(void* arg){
         // Unlock the buffer for the producer
         pthread_mutex_unlock(&input_buffer_mutex);
 
-
+        // Pop off the stop command and anything that follows if one is present
         char* stop_suffix = pop_stop_suffix_if_present(raw_tmp_buffer);
-        // Process copied data
+
+        // Process the data stored in raw tmp, and store it in processed tmp
         replace_newlines(processed_tmp_buffer, raw_tmp_buffer);
 
+        // If a stop command was found, append it back onto the end and modify the loop conditional
         if (stop_suffix != NULL){
             separation_thread_stopped = true;
             strcat(processed_tmp_buffer, stop_suffix);
         }
 
-
-
-        // Lock buf 2 -> will wait and make sure lock is available. RP thread should be ready generally
+        // Lock the separated buffer
         pthread_mutex_lock(&separated_buffer_mutex);
 
-        // copy proccessed into buf 2
+        // Copy all processed data into the separated buffer
         strcat(separated_buffer, processed_tmp_buffer);
 
-        // Notify RP thread that buf 2 has data 
+        // Notify the plus signal thread that the separated buffer has data
         pthread_cond_signal(&separated_buffer_has_data); 
-        // unlock
-
+        
+        // Unlock the mutex on separated buffer
         pthread_mutex_unlock(&separated_buffer_mutex);
-
     }
     return NULL;
 }
-
 
 
 void replace_newlines(char* output_buffer, char* input_buffer){
     /*
         Copy input to output but replace all newline characters with a single space
     */
+    // Iterate through the entire input buffer
     for (int i=0; i <  MAX_BUFFER_SIZE; i++) {
         if (input_buffer[i] == '\n'){
+            // If a newline is found, copy a space into output
             output_buffer[i] = ' ';
         } else {
+            // Otherwise just copy directly
             output_buffer[i] = input_buffer[i];
         }
     }
-   
 }
 
 

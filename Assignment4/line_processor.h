@@ -9,7 +9,6 @@ char * STOP_COMMAND = "STOP\n";
 char * NEWLINE_STOP_COMMAND = "\nSTOP\n";
 
 
-//Todo: alter size
 char input_buffer[MAX_BUFFER_SIZE];        // get_input_lines > input_buffer > separate_lines
 pthread_mutex_t input_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t input_buffer_has_data = PTHREAD_COND_INITIALIZER;
