@@ -42,9 +42,9 @@ void get_next_line(char* destination){
         Input Thread helper to pull single lines from stdin
         Clears the given destination and populates it using getline()
     */
-        memset(destination, '\0', MAX_BUFFER_SIZE);
+        memset(destination, '\0', MAX_LINE_SIZE);
         ssize_t line_size;
-        size_t buffer_size = MAX_BUFFER_SIZE;
+        size_t buffer_size = MAX_LINE_SIZE;
         line_size = getline(&destination, &buffer_size, stdin);
 }
 
@@ -295,3 +295,27 @@ void* output_thread(void* arg){
     return NULL;
 }
 
+
+
+/**********************************************************************
+ *     STOP detection for Separator, Plus Sign and Output Threads     *
+ **********************************************************************/
+char* pop_stop_suffix_if_present (char *input){
+    /*
+        Check for either case of stop command and pop/return it if found
+    */
+    if(strlen(input) == 5){
+        // If the entire buffer is a stop command, pop and return it
+        if(strcmp(input, STOP_COMMAND) == 0){
+            input[0] = '\0';
+            return STOP_COMMAND;
+        }
+    } else if(strstr(input, NEWLINE_STOP_COMMAND)){
+            // If a stop command appears in the line, pop and return it
+            char* stop_com_loc = strstr(input, NEWLINE_STOP_COMMAND);
+            stop_com_loc[0] = '\0';
+            return NEWLINE_STOP_COMMAND;
+    } 
+    // No stop command found, return NULL
+    return NULL;
+}
