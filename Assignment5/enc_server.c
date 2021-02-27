@@ -1,11 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
+#include "enc_server.h"
 // Error function used for reporting issues
 void error(const char *msg) {
   perror(msg);
@@ -28,8 +21,7 @@ void setupAddressStruct(struct sockaddr_in* address,
 }
 
 int main(int argc, char *argv[]){
-  int connectionSocket, charsRead;
-  char buffer[256];
+  int connectionSocket;
   struct sockaddr_in serverAddress, clientAddress;
   socklen_t sizeOfClientInfo = sizeof(clientAddress);
 
@@ -79,27 +71,7 @@ int main(int argc, char *argv[]){
             case 0:
                 // In the child
                 close(listenSocket);
-                printf("SERVER: Connected to client running at host %d port %d\n", 
-                            ntohs(clientAddress.sin_addr.s_addr),
-                            ntohs(clientAddress.sin_port));
-
-                // Get the message from the client and display it
-                memset(buffer, '\0', 256);
-                // Read the client's message from the socket
-                charsRead = recv(connectionSocket, buffer, 255, 0); 
-                if (charsRead < 0){
-                error("ERROR reading from socket");
-                }
-                printf("SERVER: I received this from the client: \"%s\"\n", buffer);
-
-                // Send a Success message back to the client
-                charsRead = send(connectionSocket, 
-                                "I am the server, and I got your message", 39, 0); 
-                if (charsRead < 0){
-                error("ERROR writing to socket");
-                }
-                // Close the connection socket for this client
-                close(connectionSocket); 
+                processConnection(clientAddress, connectionSocket);
                 exit(0);
             default:
                 // In the parent
@@ -126,4 +98,30 @@ int main(int argc, char *argv[]){
     // Close the listening socket
     close(listenSocket); 
     return 0;
+}
+
+void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
+    printf("SERVER: Connected to client running at host %d port %d\n", 
+                            ntohs(clientAddress.sin_addr.s_addr),
+                            ntohs(clientAddress.sin_port));
+    char buffer[256];
+    int charsRead;
+    // Get the message from the client and display it
+    memset(buffer, '\0', 256);
+
+    // Read the client's message from the socket
+    charsRead = recv(connectionSocket, buffer, 255, 0); 
+    if (charsRead < 0){
+    error("ERROR reading from socket");
+    }
+    printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+
+    // Send a Success message back to the client
+    charsRead = send(connectionSocket, 
+                    "I am the server, and I got your message", 39, 0); 
+    if (charsRead < 0){
+    error("ERROR writing to socket");
+    }
+    // Close the connection socket for this client
+    close(connectionSocket); 
 }
