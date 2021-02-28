@@ -52,7 +52,6 @@ int main(int argc, char *argv[]){
   
   // Accept a connection, blocking if one is not available until one connects
     while(1){
-        printf("Con Soc: %d\n", connectionSocket);
         // Accept the connection request which creates a connection socket
         connectionSocket = accept(listenSocket, 
                 (struct sockaddr *)&clientAddress, 
@@ -104,17 +103,65 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     printf("SERVER: Connected to client running at host %d port %d\n", 
                             ntohs(clientAddress.sin_addr.s_addr),
                             ntohs(clientAddress.sin_port));
-    char buffer[256];
     int charsRead;
-    // Get the message from the client and display it
-    memset(buffer, '\0', 256);
-
-    // Read the client's message from the socket
-    charsRead = recv(connectionSocket, buffer, 255, 0); 
+    // Recv verification
+    char EncVerification[1];
+    charsRead = recv(connectionSocket, EncVerification, 1, 0); 
     if (charsRead < 0){
     error("ERROR reading from socket");
     }
-    printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+
+    if(EncVerification[0] != 'E'){
+        error("Invalid Client"); // Send failure notice to terminate
+        exit(2); //TODO check exit code
+    }
+
+    // respond w/verification
+    charsRead = send(connectionSocket, EncVerification, strlen(EncVerification), 0); 
+    if (charsRead < 0){
+        error("ERROR writing to socket");
+    }
+    
+    
+    
+    // recieve size as unsigned short
+
+
+    // Confirm that size has been recieved
+
+    
+    
+    // Recieve plaintext
+    
+    // Send encrypted text
+
+    
+    
+    
+    
+    
+    
+    
+    /*
+    int textLength = 256;
+    char plainText[textLength]; //Change size based on given in verification handshake
+    char key[textLength]; 
+    int charsRead;
+    // Get the message from the client and display it
+    memset(plainText, '\0', textLength);
+    
+    // Read the client's message from the socket
+    charsRead = recv(connectionSocket, plainText, textLength-1, 0); 
+    if (charsRead < 0){
+    error("ERROR reading from socket");
+    }
+    printf("SERVER: I received this PLAINTEXT from the client: \"%s\"\n", plainText);
+    charsRead = recv(connectionSocket, key, textLength-1, 0); 
+    if (charsRead < 0){
+    error("ERROR reading from socket");
+    }
+    printf("SERVER: I received this KEY from the client: \"%s\"\n", key);
+    
 
     // Send a Success message back to the client
     charsRead = send(connectionSocket, 
@@ -122,6 +169,36 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     if (charsRead < 0){
     error("ERROR writing to socket");
     }
+
+    char encryptedText[textLength];
+    encryptText(plainText, key, encryptedText);
+    */
     // Close the connection socket for this client
     close(connectionSocket); 
+}
+
+
+
+
+
+
+void encryptText(char* plainText, char* key, char* encryptedText){
+    int plainTextNumeric[strlen(plainText)];
+    convertFromAscii(plainText, plainTextNumeric);
+    for (int i = 0; i < strlen(plainText); i++){
+        printf("PT: %c\n", plainText[i]);
+        printf("NUM: %c\n\n", plainTextNumeric[i]);
+    }
+}
+
+void convertFromAscii(char* input, int* output){
+    for (int i = 0; i < strlen(input); i++){
+        if(input[i] == ' '){
+            output[i] = 26;
+        } else {
+            int currentCharacter = (int)input[i];
+            output[i] = currentCharacter - 65;
+        }
+        printf("NUM: %c\n\n", output[i]);
+    }
 }

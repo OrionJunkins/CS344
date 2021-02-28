@@ -19,14 +19,14 @@ int main(int argc, char* argv[]){
     return 0;
 }
 
-char generate_rand_char(){
+char generateRandChar(){
     int rand_number = rand();
     int char_index = rand_number % 27;
     char c = map_to_ascii(char_index);
     return c;
 }
 
-char map_to_ascii(int number){
+char mapToAscii(int number){
     if(number == 26){
         return ' ';
     }

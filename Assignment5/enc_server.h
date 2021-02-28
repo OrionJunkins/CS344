@@ -7,3 +7,6 @@
 #include <netinet/in.h>
 
 void processConnection(struct sockaddr_in clientAddress, int connectionSocket);
+
+void encryptText(char* plainText, char* key, char* encryptedText);
+void convertFromAscii(char* input, int* output);
