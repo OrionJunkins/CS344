@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-char generate_rand_char();
+#include <unistd.h>
 
-char map_to_ascii(int number);
+char generateRandChar();
+
+char mapToAscii(int number);

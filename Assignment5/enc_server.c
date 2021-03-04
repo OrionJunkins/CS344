@@ -103,13 +103,9 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     printf("SERVER: Connected to client running at host %d port %d\n", 
                             ntohs(clientAddress.sin_addr.s_addr),
                             ntohs(clientAddress.sin_port));
-    int charsRead;
     // Recv verification
     char EncVerification[1];
-    charsRead = recv(connectionSocket, EncVerification, 1, 0); 
-    if (charsRead < 0){
-    error("ERROR reading from socket");
-    }
+    recieveAll(connectionSocket, EncVerification, 1);
 
     if(EncVerification[0] != 'E'){
         error("Invalid Client"); // Send failure notice to terminate
@@ -117,77 +113,72 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     }
 
     // respond w/verification
-    charsRead = send(connectionSocket, EncVerification, strlen(EncVerification), 0); 
-    if (charsRead < 0){
-        error("ERROR writing to socket");
-    }
+    sendAll(connectionSocket, EncVerification, 1);
     
     
-    
-    // recieve size as unsigned short
+    // recieve size
+    char keySizeString[MAX_DIGITS];
+    recieveAll(connectionSocket,keySizeString, MAX_DIGITS);
+    int keySize = atoi(keySizeString);
+    printf("Keysize: %d\n",keySize);
 
-
-    // Confirm that size has been recieved
-
-    
-    
     // Recieve plaintext
+    char plaintext[keySize];
+    recieveAll(connectionSocket, plaintext, keySize);
+
+    // Recieve key
+    char key[keySize];
+    recieveAll(connectionSocket, key, keySize);
+
+
+    // Generate cipertext
+    char ciphertext[keySize];
+    encryptText(plaintext, key, ciphertext);
+
     
     // Send encrypted text
 
-    
-    
-    
-    
-    
-    
-    
-    /*
-    int textLength = 256;
-    char plainText[textLength]; //Change size based on given in verification handshake
-    char key[textLength]; 
-    int charsRead;
-    // Get the message from the client and display it
-    memset(plainText, '\0', textLength);
-    
-    // Read the client's message from the socket
-    charsRead = recv(connectionSocket, plainText, textLength-1, 0); 
-    if (charsRead < 0){
-    error("ERROR reading from socket");
-    }
-    printf("SERVER: I received this PLAINTEXT from the client: \"%s\"\n", plainText);
-    charsRead = recv(connectionSocket, key, textLength-1, 0); 
-    if (charsRead < 0){
-    error("ERROR reading from socket");
-    }
-    printf("SERVER: I received this KEY from the client: \"%s\"\n", key);
-    
 
-    // Send a Success message back to the client
-    charsRead = send(connectionSocket, 
-                    "I am the server, and I got your message", 39, 0); 
-    if (charsRead < 0){
-    error("ERROR writing to socket");
-    }
-
-    char encryptedText[textLength];
-    encryptText(plainText, key, encryptedText);
-    */
     // Close the connection socket for this client
     close(connectionSocket); 
 }
 
 
+void recieveAll(int connectionSocket, char * buf, size_t length){
+    int charsRead;
+    char* bufPtr = buf;
+    while (length > 0){
+        charsRead = recv(connectionSocket, bufPtr, length, 0); 
+        if (charsRead < 0){
+            error("ERROR reading from socket");
+            exit(2); //TODO
+        }
+        printf("chars read %d\n", charsRead);
+        bufPtr += charsRead;
+        length -= charsRead;
+    }
+}
 
+void sendAll(int connectionSocket, const void * buf, size_t length){
+    ssize_t charsWritten;
+    const char* bufPtr = buf;
+    while(length > 0){
+        charsWritten = send(connectionSocket, bufPtr, length, 0); 
+        if (charsWritten < 0){
+            error("CLIENT: ERROR writing to socket");
+            exit(2); //TODO
+        }
+        bufPtr += charsWritten;
+        length -= charsWritten;
+    }
+}
 
-
-
-void encryptText(char* plainText, char* key, char* encryptedText){
-    int plainTextNumeric[strlen(plainText)];
-    convertFromAscii(plainText, plainTextNumeric);
-    for (int i = 0; i < strlen(plainText); i++){
-        printf("PT: %c\n", plainText[i]);
-        printf("NUM: %c\n\n", plainTextNumeric[i]);
+void encryptText(char* plaintext, char* key, char* encryptedText){
+    int plaintextNumeric[strlen(plaintext)];
+    convertFromAscii(plaintext, plaintextNumeric);
+    for (int i = 0; i < strlen(plaintext); i++){
+        printf("PT: %c\n", plaintext[i]);
+        printf("NUM: %c\n\n", plaintextNumeric[i]);
     }
 }
 

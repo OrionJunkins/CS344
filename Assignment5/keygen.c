@@ -5,24 +5,23 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Invalid Input to Keygen");
     }
 
-    int key_len = atoi(argv[1]);
-    char key[key_len + 1];
+    int keyLen = atoi(argv[1]);
+    char key[keyLen];
     srand(time(0));
 
-    for(int i = 0; i < key_len; i++){
-        char c = generate_rand_char();
+    for(int i = 0; i < keyLen; i++){
+        char c = generateRandChar();
         key[i] = c;
     }
     
-    strcat(key, "\n");
-    printf("%s", key);    
+    write(STDOUT_FILENO, key, strlen(key));  
     return 0;
 }
 
 char generateRandChar(){
-    int rand_number = rand();
-    int char_index = rand_number % 27;
-    char c = map_to_ascii(char_index);
+    int randNumber = rand();
+    int charIndex = randNumber % 27;
+    char c = mapToAscii(charIndex);
     return c;
 }
 

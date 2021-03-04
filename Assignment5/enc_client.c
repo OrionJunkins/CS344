@@ -40,18 +40,29 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 
 int main(int argc, char *argv[]) {
-    int connectionSocket, portNumber, charsWritten, charsRead;
-    struct sockaddr_in serverAddress;
-    char* plainText; 
-    char* key;
     // Check usage & args
     if (argc < 3) { 
         fprintf(stderr,"USAGE: %s plaintext key port \n", argv[0]);
         exit(0); 
     } 
-    getFileText(plainText, argv[1]);
-    getFileText(key, argv[1]);
 
+    // Socket setup
+    int connectionSocket, portNumber, charsWritten, charsRead;
+    struct sockaddr_in serverAddress;
+
+    // Get plaintext and Key files    
+    char* plaintext = getFileText(argv[1]);
+    char* key = getFileText(argv[2]);
+
+    // Get sizes of each
+    int fileSize = strlen(plaintext);
+    int keySize = strlen(key);
+
+    // Verify that lengths match
+    if(fileSize != keySize) {
+        perror("File and Key must be the same size");
+        exit(1); // TODO Check error conditions
+    }
 
     // Create a socket
     connectionSocket = socket(AF_INET, SOCK_STREAM, 0); 
@@ -67,69 +78,32 @@ int main(int argc, char *argv[]) {
         error("CLIENT: ERROR connecting");
     }
 
-    // Send client verification - 1 byte
-    char EncVerification[1] = "E";
-
-    charsWritten = send(connectionSocket, EncVerification, strlen(EncVerification), 0); 
-    if (charsWritten < 0){
-        error("CLIENT: ERROR writing to socket");
-    }
-
-
+    // Send client verification 
+    char* EncVerification = "E";
+    sendAll(connectionSocket, EncVerification, strlen(EncVerification)); 
 
     // Recieve verification response from server
     charsRead = recv(connectionSocket, EncVerification, 1, 0); 
-    if (charsRead < 0){
-        error("ERROR reading from socket");
-    }
     if(EncVerification[0] != 'E'){
         error("Invalid Client"); // Send failure notice to terminate
         exit(2); //TODO check exit code
     }
 
-
-    // Send size as unsigned short
-
-
-
-    // recive confirmation - 1 byte
+    // Send size as unsigned long
+    char sizeString[MAX_DIGITS]; // Long enough for max unsigned int size
+    memset(sizeString, '\0', MAX_DIGITS);
+    sprintf(sizeString, "%d", keySize);
+    sendAll(connectionSocket, sizeString, MAX_DIGITS);
     
     // Send plaintext
-    // Recieve plaintextRecieved confirm
-
+    sendAll(connectionSocket, plaintext, strlen(plaintext));
+    printf("ptxt sent\n");
     // Send Key
-    
+    sendAll(connectionSocket, key, strlen(plaintext));
+    printf("key sent\n");
 
     // Recieve ciphertext
 
-    /*
-    // Send message to server
-    // Write to the server
-    charsWritten = send(connectionSocket, buffer, strlen(buffer), 0); 
-    if (charsWritten < 0){
-        error("CLIENT: ERROR writing to socket");
-    }
-    if (charsWritten < strlen(buffer)){
-        printf("CLIENT: WARNING: Not all data written to socket!\n");
-    }
-
-    // Get return message from server
-    // Clear out the buffer again for reuse
-    memset(buffer, '\0', sizeof(buffer));
-    // Read data from the socket, leaving \0 at end
-    charsRead = recv(connectionSocket, buffer, sizeof(buffer) - 1, 0); 
-    if (charsRead < 0){
-        error("CLIENT: ERROR reading from socket");
-    }
-    printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
-
-    char key[256] = "EFGGG";
-
-    charsWritten = send(connectionSocket, key, strlen(key), 0); 
-    if (charsWritten < 0){
-        error("CLIENT: ERROR writing to socket");
-    }
-    */
     // Close the socket
     close(connectionSocket); 
     return 0;
@@ -137,8 +111,9 @@ int main(int argc, char *argv[]) {
 
 
 
-void getFileText(char* dest, char* filename){
+char* getFileText(char* filename){
     long fileLength;
+    char* dest;
 
     FILE* file = fopen(filename, "r");
 
@@ -149,23 +124,24 @@ void getFileText(char* dest, char* filename){
     fseek(file, 0L , SEEK_END);
     fileLength = ftell(file);
     rewind(file);
-
     dest = calloc(1, fileLength + 1);
     if(dest == NULL){
         perror("Error Allocating memory\n");
         exit(1); //TODO check exit command
     }
     int index = 0;
-    char cur;
-    while((cur = fgetc(file)) != EOF){
+    char cur = fgetc(file);
+    for(int i = 0; i < fileLength; i++){ 
         if(isValidChar(cur)){
             dest[index] = cur;
         } else{
             perror("Bad character\n");
             exit(1); //TODO check exit command
         }
-        index ++;
+        index++;
+        cur = fgetc(file);
     }
+    return dest;    
 }
 
 bool isValidChar(char c){
@@ -176,5 +152,20 @@ bool isValidChar(char c){
         return true;
     } else {
         return false;
+    }
+}
+
+
+void sendAll(int connectionSocket, const void * buf, size_t length) {
+    ssize_t charsWritten;
+    const char* bufPtr = buf;
+    while(length > 0){
+        charsWritten = send(connectionSocket, bufPtr, length, 0); 
+        if (charsWritten < 0){
+            error("CLIENT: ERROR writing to socket");
+            exit(2); //TODO
+        }
+        bufPtr += charsWritten;
+        length -= charsWritten;
     }
 }
