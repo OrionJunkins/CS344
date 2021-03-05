@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     recieveAll(connectionSocket, ciphertext, keySize);
 
     // Output the ciphertext
-    printf("%s", ciphertext);
+    printf("%s\n", ciphertext);
 
     // Close the socket
     close(connectionSocket); 
@@ -138,7 +138,7 @@ char* getFileText(char* filename){
     int cur;
     char curChar;
     int index = 0;
-    while((cur = fgetc(file)) != EOF){
+    while((cur = fgetc(file)) != EOF && cur != '\n'){
         curChar = (char)cur;
         if(isValidChar(curChar)){
             dest[index] = curChar;

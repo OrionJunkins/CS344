@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
     }
     key[keyLen] = '\0';
     
-    write(STDOUT_FILENO, key, strlen(key));
+    printf("%s\n", key);
     return 0;
 }
 

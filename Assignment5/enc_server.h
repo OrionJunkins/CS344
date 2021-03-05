@@ -9,3 +9,5 @@ void sendAll(int connectionSocket, char* buf, size_t length);
 void recieveAll(int connectionSocket, char * buf, size_t length);
 
 char convertToAscii(int number);
+void setupAddressStruct(struct sockaddr_in* address, 
+                        int portNumber);
