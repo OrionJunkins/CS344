@@ -6,15 +6,16 @@ int main(int argc, char* argv[]){
     }
 
     int keyLen = atoi(argv[1]);
-    char key[keyLen];
+    char key[keyLen+1];
     srand(time(0));
 
     for(int i = 0; i < keyLen; i++){
         char c = generateRandChar();
         key[i] = c;
     }
+    key[keyLen] = '\0';
     
-    write(STDOUT_FILENO, key, strlen(key));  
+    write(STDOUT_FILENO, key, strlen(key));
     return 0;
 }
 
