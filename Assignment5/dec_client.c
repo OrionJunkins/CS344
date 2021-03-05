@@ -1,102 +1,168 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>  // ssize_t
-#include <sys/socket.h> // send(),recv()
-#include <netdb.h>      // gethostbyname()
+#include "dec_client.h"
 
-/**
-* Client code
-* 1. Create a socket and connect to the server specified in the command arugments.
-* 2. Prompt the user for input and send that input as a message to the server.
-* 3. Print the message received from the server and exit the program.
-*/
+int main(int argc, char *argv[]) {
+    // Store values from argv
+    char* ciphertextFile = argv[1];
+    char* keyFile = argv[2];
+    int port = atoi(argv[3]);
+    
+    // Check usage & args
+    if (argc < 3) { 
+        fprintf(stderr,"USAGE: %s ciphertext key port \n", argv[0]);
+        exit(0); 
+    } 
 
-// Error function used for reporting issues
-void error(const char *msg) { 
-  perror(msg); 
-  exit(0); 
-} 
+    // Socket setup
+    int connectionSocket, portNumber, charsWritten, charsRead;
+    struct sockaddr_in serverAddress;
+
+    // Get ciphertext and key text from argv filenames to char*
+    char* ciphertext = getFileText(ciphertextFile);
+    char* key = getFileText(keyFile);
+
+    // Get sizes of each
+    int ciphertextSize = strlen(ciphertext);
+    int keySize = strlen(key);
+
+    // Verify that lengths match
+    if(keySize < ciphertextSize) {
+        fprintf(stderr, "Error: key '%s' is too short\n", keyFile);
+        exit(1); // TODO Check error conditions
+    } else if (keySize > ciphertextSize) {
+        key[ciphertextSize] = '\0';
+        keySize = strlen(key);
+    }
+
+    // Create a socket
+    connectionSocket = socket(AF_INET, SOCK_STREAM, 0); 
+    if (connectionSocket < 0){
+        fprintf(stderr, "Error: could not create a network socket\n");
+        exit(2);
+    }
+
+    // Set up the server address struct
+    setupAddressStruct(&serverAddress, port, HOSTNAME);
+
+    // Connect to server
+    if (connect(connectionSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
+        fprintf(stderr, "Error: could not contact enc_server on port %d\n", port);
+        exit(2);
+    }
+
+    // Send client identity verification 
+    char* encVerification = "D";
+    sendAll(connectionSocket, encVerification, strlen(encVerification)); 
+
+    // Recieve verification response from server
+    char verificationResponse[1];
+    recieveAll(connectionSocket, verificationResponse, 1); 
+    if(verificationResponse[0] != 'V'){
+        error("Invalid Client"); // Send failure notice to terminate
+        exit(2); //TODO check exit code
+    }
+
+    // Send key/ciphertext size as unsigned long
+    char sizeString[MAX_DIGITS]; // Max string length needed to hold largest possible length
+    memset(sizeString, '\0', MAX_DIGITS);
+    sprintf(sizeString, "%d", keySize);
+    sendAll(connectionSocket, sizeString, MAX_DIGITS);
+    
+    // Send ciphertext
+    sendAll(connectionSocket, ciphertext, keySize);
+    
+    // Send Key
+    sendAll(connectionSocket, key, keySize);
+
+    // Recieve plaintext
+    char plaintext[keySize + 1]; // Enough for text and '\0'
+    recieveAll(connectionSocket, plaintext, keySize);
+
+    // Output the plaintext
+    printf("%s\n", plaintext);
+
+    // Close the socket
+    close(connectionSocket); 
+    return 0;
+}
+
 
 // Set up the address struct
 void setupAddressStruct(struct sockaddr_in* address, 
-                        int portNumber, 
-                        char* hostname){
- 
-  // Clear out the address struct
-  memset((char*) address, '\0', sizeof(*address)); 
+                            int portNumber, 
+                            char* hostname){
+    
+    // Clear out the address struct
+    memset((char*) address, '\0', sizeof(*address)); 
 
-  // The address should be network capable
-  address->sin_family = AF_INET;
-  // Store the port number
-  address->sin_port = htons(portNumber);
+    // The address should be network capable
+    address->sin_family = AF_INET;
+    // Store the port number
+    address->sin_port = htons(portNumber);
 
-  // Get the DNS entry for this host name
-  struct hostent* hostInfo = gethostbyname(hostname); 
-  if (hostInfo == NULL) { 
-    fprintf(stderr, "CLIENT: ERROR, no such host\n"); 
-    exit(0); 
-  }
-  // Copy the first IP address from the DNS entry to sin_addr.s_addr
-  memcpy((char*) &address->sin_addr.s_addr, 
-        hostInfo->h_addr_list[0],
-        hostInfo->h_length);
+    // Get the DNS entry for this host name
+    struct hostent* hostInfo = gethostbyname(hostname); 
+    if (hostInfo == NULL) { 
+        fprintf(stderr, "CLIENT: ERROR, no such host\n"); 
+        exit(0); 
+    }
+    // Copy the first IP address from the DNS entry to sin_addr.s_addr
+    memcpy((char*) &address->sin_addr.s_addr, 
+            hostInfo->h_addr_list[0],
+            hostInfo->h_length);
 }
 
-int main(int argc, char *argv[]) {
-  int socketFD, portNumber, charsWritten, charsRead;
-  struct sockaddr_in serverAddress;
-  char buffer[256];
-  // Check usage & args
-  if (argc < 3) { 
-    fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); 
-    exit(0); 
-  } 
 
-  // Create a socket
-  socketFD = socket(AF_INET, SOCK_STREAM, 0); 
-  if (socketFD < 0){
-    error("CLIENT: ERROR opening socket");
-  }
+char* getFileText(char* filename){
+    /*
+        Given a filename, open the file, and process it one char at a time.
+        If a char is valid, add it to the output.
+        Once the end of the file is reached, return the produced output.
+    */
+    // Open the file
+    FILE* file = fopen(filename, "r");
+    if (file == NULL){
+        fprintf(stderr, "Error: could not locate '%s'\n", filename);
+        exit(1); 
+    }
+    
+    // Get the file length
+    struct stat st;
+    if(stat(filename, &st) != 0) {
+        return 0;
+    }
+    long fileLength = st.st_size; 
+    
+    // Create an appropriately sized destination string
+    char* dest = (char*)calloc(fileLength, sizeof(char));
 
-   // Set up the server address struct
-  setupAddressStruct(&serverAddress, atoi(argv[2]), argv[1]);
-
-  // Connect to server
-  if (connect(socketFD, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
-    error("CLIENT: ERROR connecting");
-  }
-  // Get input message from user
-  printf("CLIENT: Enter text to send to the server, and then hit enter: ");
-  // Clear out the buffer array
-  memset(buffer, '\0', sizeof(buffer));
-  // Get input from the user, trunc to buffer - 1 chars, leaving \0
-  fgets(buffer, sizeof(buffer) - 1, stdin);
-  // Remove the trailing \n that fgets adds
-  buffer[strcspn(buffer, "\n")] = '\0'; 
-
-  // Send message to server
-  // Write to the server
-  charsWritten = send(socketFD, buffer, strlen(buffer), 0); 
-  if (charsWritten < 0){
-    error("CLIENT: ERROR writing to socket");
-  }
-  if (charsWritten < strlen(buffer)){
-    printf("CLIENT: WARNING: Not all data written to socket!\n");
-  }
-
-  // Get return message from server
-  // Clear out the buffer again for reuse
-  memset(buffer, '\0', sizeof(buffer));
-  // Read data from the socket, leaving \0 at end
-  charsRead = recv(socketFD, buffer, sizeof(buffer) - 1, 0); 
-  if (charsRead < 0){
-    error("CLIENT: ERROR reading from socket");
-  }
-  printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
-
-  // Close the socket
-  close(socketFD); 
-  return 0;
+    int cur;
+    char curChar;
+    int index = 0;
+    while((cur = fgetc(file)) != EOF && cur != '\n'){
+        curChar = (char)cur;
+        if(isValidChar(curChar)){
+            dest[index] = curChar;
+        } else{
+            fprintf(stderr, "Error: input contains bad characters");
+            exit(1); 
+        }
+        index++;
+    }
+    return dest;
 }
+
+
+bool isValidChar(char c){
+    int asciiVal = (int)c;
+    if (c == ' '){
+        return true;
+    } else if (c == '\0'){
+        return true;
+    }else if (65 <= asciiVal && asciiVal <= 90){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
