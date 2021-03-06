@@ -1,9 +1,5 @@
+/*
+    Trivial header file for enc_client.c All documentation appears in .c file.
+*/
 #include "socket_helpers.h"
-
-char* HOSTNAME = "localhost";
-
-bool isValidChar(char c);
-char* getFileText(char* filename);
-void setupAddressStruct(struct sockaddr_in* address, 
-                            int portNumber, 
-                            char* hostname);
+#include "text_helpers.h"

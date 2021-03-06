@@ -1,13 +1,7 @@
+/*
+    Trivial header file for enc_server.c All documentation appears in .c file.
+*/
 #include "socket_helpers.h"
-
+#include "text_helpers.h"
 void processConnection(struct sockaddr_in clientAddress, int connectionSocket);
-
 void encryptText(char* plaintext, char* key, char* ciphertextDest); 
-void convertFromAscii(char* input, int* output);
-
-void sendAll(int connectionSocket, char* buf, size_t length);
-void recieveAll(int connectionSocket, char * buf, size_t length);
-
-char convertToAscii(int number);
-void setupAddressStruct(struct sockaddr_in* address, 
-                        int portNumber);

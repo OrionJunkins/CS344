@@ -1,3 +1,10 @@
+/*
+    Encryption client. Given ciphertext, a key, and a port: 
+        1) Connect to an encryption server at the given port if possible
+        2) Send plaintext and key
+        3) Recieve ciphertext back
+        4) Output ciphertext
+*/
 #include "enc_client.h"
 
 int main(int argc, char *argv[]) {
@@ -27,7 +34,7 @@ int main(int argc, char *argv[]) {
     // Verify that lengths match
     if(keySize < plaintextSize) {
         fprintf(stderr, "Error: key '%s' is too short\n", keyFile);
-        exit(1); // TODO Check error conditions
+        exit(1); 
     } else if (keySize > plaintextSize) {
         key[plaintextSize] = '\0';
         keySize = strlen(key);
@@ -41,7 +48,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Set up the server address struct
-    setupAddressStruct(&serverAddress, port, HOSTNAME);
+    setupClientAddressStruct(&serverAddress, port);
 
     // Connect to server
     if (connect(connectionSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
@@ -57,8 +64,8 @@ int main(int argc, char *argv[]) {
     char verificationResponse[1];
     recieveAll(connectionSocket, verificationResponse, 1); 
     if(verificationResponse[0] != 'V'){
-        error("Invalid Client"); // Send failure notice to terminate
-        exit(2); //TODO check exit code
+        fprintf(stderr, "Error: could not contact enc_server on port %d\n", port);
+        exit(2);
     }
 
     // Send key/plaintext size as unsigned long
@@ -84,85 +91,3 @@ int main(int argc, char *argv[]) {
     close(connectionSocket); 
     return 0;
 }
-
-
-// Set up the address struct
-void setupAddressStruct(struct sockaddr_in* address, 
-                            int portNumber, 
-                            char* hostname){
-    
-    // Clear out the address struct
-    memset((char*) address, '\0', sizeof(*address)); 
-
-    // The address should be network capable
-    address->sin_family = AF_INET;
-    // Store the port number
-    address->sin_port = htons(portNumber);
-
-    // Get the DNS entry for this host name
-    struct hostent* hostInfo = gethostbyname(hostname); 
-    if (hostInfo == NULL) { 
-        fprintf(stderr, "CLIENT: ERROR, no such host\n"); 
-        exit(0); 
-    }
-    // Copy the first IP address from the DNS entry to sin_addr.s_addr
-    memcpy((char*) &address->sin_addr.s_addr, 
-            hostInfo->h_addr_list[0],
-            hostInfo->h_length);
-}
-
-
-char* getFileText(char* filename){
-    /*
-        Given a filename, open the file, and process it one char at a time.
-        If a char is valid, add it to the output.
-        Once the end of the file is reached, return the produced output.
-    */
-    // Open the file
-    FILE* file = fopen(filename, "r");
-    if (file == NULL){
-        fprintf(stderr, "Error: could not locate '%s'\n", filename);
-        exit(1); 
-    }
-    
-    // Get the file length
-    struct stat st;
-    if(stat(filename, &st) != 0) {
-        return 0;
-    }
-    long fileLength = st.st_size; 
-    
-    // Create an appropriately sized destination string
-    char* dest = (char*)calloc(fileLength, sizeof(char));
-
-    int cur;
-    char curChar;
-    int index = 0;
-    while((cur = fgetc(file)) != EOF && cur != '\n'){
-        curChar = (char)cur;
-        if(isValidChar(curChar)){
-            dest[index] = curChar;
-        } else{
-            fprintf(stderr, "Error: %s contains bad characters\n", filename);
-            exit(1); 
-        }
-        index++;
-    }
-    return dest;
-}
-
-
-bool isValidChar(char c){
-    int asciiVal = (int)c;
-    if (c == ' '){
-        return true;
-    } else if (c == '\0'){
-        return true;
-    }else if (65 <= asciiVal && asciiVal <= 90){
-        return true;
-    } else {
-        return false;
-    }
-}
-
-

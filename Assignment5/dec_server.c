@@ -1,3 +1,10 @@
+/*
+    Decryption Server. Given a port number 
+        1) Connect to any valid decryption clients which connect
+        2) Recieve filesize, cipertext and key
+        3) Decrypt into plaintext
+        4) Send plaintext back to client
+*/
 #include "dec_server.h"
 
 int main(int argc, char *argv[]){
@@ -20,7 +27,7 @@ int main(int argc, char *argv[]){
     }
 
     // Set up the address struct for the server socket
-    setupAddressStruct(&serverAddress, atoi(argv[1]));
+    setupServerAddressStruct(&serverAddress, atoi(argv[1]));
 
     // Associate the socket to the port
     if (bind(listenSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0){
@@ -70,22 +77,6 @@ int main(int argc, char *argv[]){
 }
 
 
-void setupAddressStruct(struct sockaddr_in* address, int portNumber){
-    /*
-        Set up the address struct for the server socket
-    */
-    // Clear out the address struct
-    memset((char*) address, '\0', sizeof(*address)); 
-
-    // The address should be network capable
-    address->sin_family = AF_INET;
-    // Store the port number
-    address->sin_port = htons(portNumber);
-    // Allow a client at any address to connect to this server
-    address->sin_addr.s_addr = INADDR_ANY;
-}
-
-
 void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     // Recieve verification of identity from the client
     char encVerification[2]; // Enough for verification char and '\0'
@@ -97,9 +88,8 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
         char* verificationResponse = "F";
         sendAll(connectionSocket, verificationResponse, strlen(verificationResponse)); 
 
-        // Raise an error and terminate the process
-        fprintf(stderr, "Error: Invalid Client\n"); 
-        exit(0); //TODO check exit code
+        // Connection is invalid, terminate the process
+        exit(2); 
     }
 
     // Else, the client is valid so respond with a verification char of 'V'
@@ -131,6 +121,7 @@ void processConnection(struct sockaddr_in clientAddress, int connectionSocket) {
     // Close the connection socket
     close(connectionSocket); 
 }
+
 
 void decryptText(char* ciphertext, char* key, char* plaintextDest){
     /*
@@ -170,39 +161,4 @@ void decryptText(char* ciphertext, char* key, char* plaintextDest){
     
     // Copy to the given destination
     strcpy(plaintextDest, plaintext);  
-}
-
-void convertFromAscii(char* input, int* output){
-    /*
-        Convert from ascii to a numeric representation such that:
-            A, B, ..., Z corresponds to 1, 2, ..., 25 respectively
-            ' ' (space) corresponds to 26
-    */
-   // For every char in the input,
-    for (int i = 0; i < strlen(input); i++){
-        // If it is a space, copy 26
-        if(input[i] == ' '){
-            output[i] = 26;
-        } else {
-            // Else subtract 65 from the ascii value to yield an alphabet index relative to 0
-            int currentCharacter = (int)input[i];
-            output[i] = currentCharacter - 65;
-        }
-    }
-}
-
-char convertToAscii(int number){
-    /*
-        Convert a char to ascii from a numeric representation such that:
-            A, B, ..., Z corresponds to 1, 2, ..., 25 respectively
-            ' ' (space) corresponds to 26
-    */
-    // If the number is 26, return a space
-    if(number == 26){
-        return ' ';
-    }else{
-        // return the number plus 65 to yield the corresponding ascii value
-        char c = (char)(number + 65);
-        return c;
-    }
 }
