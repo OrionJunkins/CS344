@@ -143,7 +143,7 @@ char* getFileText(char* filename){
         if(isValidChar(curChar)){
             dest[index] = curChar;
         } else{
-            fprintf(stderr, "Error: input contains bad characters");
+            fprintf(stderr, "Error: %s contains bad characters\n", filename);
             exit(1); 
         }
         index++;
