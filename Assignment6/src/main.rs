@@ -1,4 +1,4 @@
-use std::env; // to get arugments passed to the program
+use std::env; // to get arguments passed to the program
 use std::thread;
 use thread::JoinHandle;
 /*
@@ -124,11 +124,11 @@ fn main() {
 
     // Change the following code to create 2 threads that run concurrently and each of which uses map_data() function to process one of the two partitions
 
-    // Copy each partition into their own vector
+    // Copy each partition into its own vector
     let x1 : Vec<usize> = xs[0].clone();
     let x2 : Vec<usize> = xs[1].clone();
 
-    // Create a thread for each subarray
+    // Create a thread for each
     let x1_thread = thread::spawn(move || map_data(&x1));
     let x2_thread = thread::spawn(move || map_data(&x2));
 
@@ -167,7 +167,7 @@ fn main() {
     // Store thread handlers in a vector
     let mut handlers : Vec<JoinHandle<usize>> = Vec::new();
 
-    // Create 1 thread per partition
+    // Create 1 thread per partition, tracking all created handlers
     for partition in partitions{
         let cur_thread = thread::spawn(move || map_data(&partition));
         handlers.push(cur_thread);
@@ -188,7 +188,6 @@ fn main() {
     // REDUCE STEP: Process the intermediate result to produce the final result
     let sum = reduce_data(&intermediate_sums);
     println!("Sum = {}", sum);
-    
 }
 
 /*
@@ -209,46 +208,59 @@ fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
     // Get the size of the input vector
     let num_elems = v.len();
 
-    // Find base partition size and number of each partition size
+    // Find partition sizes and the number of each to produce
     let reg_partition_size :usize = num_elems / num_partitions;
+    let extra_elem_patition_size = reg_partition_size + 1;
     let extra_elem_partitions = num_elems % num_partitions;
     let reg_size_partitions = num_partitions - extra_elem_partitions;
 
     // Create a vector of vectors for partitions
     let mut partitions: Vec<Vec<usize>> = Vec::new();
+
+    // Track indexes in the origingal input vector to copy the correct data
     let mut copy_index_start = 0;
     let mut copy_index_end;
 
-
-    // Add extra elem partitions
+    // Add partitions which have an extra elem
     for _partition in 0..extra_elem_partitions {
-        copy_index_end = copy_index_start + reg_partition_size + 1;
+        // Set the ending index of the chunk to be copied
+        copy_index_end = copy_index_start + extra_elem_patition_size;
         
-        let mut temp : Vec<usize> = Vec::new();
+        // Create a vector for the current partition
+        let mut current_partition : Vec<usize> = Vec::new();
         
+        // Copy all elements between the indexes from the input to the current partition
         for i in copy_index_start..copy_index_end {
-            temp.push(v[i]);
+            current_partition.push(v[i]);
         }
 
-        partitions.push(temp);
+        // Move the current partition to the vector of all partitions
+        partitions.push(current_partition);
 
+        // Update the starting index
         copy_index_start = copy_index_end
     }
 
-
-    // Add reg size partitions
+    // Add regular size partitions
     for _partition in 0..reg_size_partitions {
+        // Set the ending index of the chunk to be copied
         copy_index_end = copy_index_start + reg_partition_size;
         
-        let mut temp : Vec<usize> = Vec::new();
+        // Create a vector for the current partition
+        let mut current_partition : Vec<usize> = Vec::new();
         
+        // Copy all elements between the indexes from the input to the current partition
         for i in copy_index_start..copy_index_end {
-            temp.push(v[i]);
+            current_partition.push(v[i]);
         }
 
-        partitions.push(temp);
+        // Move the current partition to the vector of all partitions
+        partitions.push(current_partition);
 
+        // Update the starting index
         copy_index_start = copy_index_end
     }
+
+    // Return generated partitions vector
     partitions
 }
